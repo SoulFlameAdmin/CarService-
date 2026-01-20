@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>SoulFlame CarService — Screen 2 (Ultra Tesla Responsive)</title>
+
+  <style>
+    :root{
+      --bgA:#ffffff;
+      --bgB:#f2f4f7;
+      --bgC:#0a0a0c;
+
+      --text:#0b0b0d;
+      --muted:rgba(11,11,13,.72);
+
+      --glass: rgba(255,255,255,.78);
+      --glass2: rgba(255,255,255,.60);
+      --stroke: rgba(11,11,13,.10);
+      --stroke2: rgba(255,255,255,.28);
+
+      --shadow: 0 26px 80px rgba(0,0,0,.12);
+
+      --user:#00bcd4;
+      --biz:#ffb300;
+
+      /* responsive geometry */
+      --radius: clamp(18px, 2.8vw, 26px);
+      --pad: clamp(14px, 3.2vw, 22px);
+      --gap: clamp(12px, 2.6vw, 18px);
+
+      --brandSize: clamp(22px, 4.6vw, 30px);
+      --headSize: clamp(16px, 3.2vw, 18px);
+      --descSize: clamp(12.5px, 2.7vw, 13.5px);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      min-height:100svh; /* mobile safe height */
+      overflow:hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      color:var(--text);
+
+      background:
+        radial-gradient(1200px 700px at 15% 18%, rgba(0,0,0,.06), transparent 58%),
+        radial-gradient(900px 560px at 78% 26%, rgba(0,0,0,.12), transparent 62%),
+        linear-gradient(135deg, var(--bgA), var(--bgB) 54%, var(--bgC));
+    }
+
+    /* animated light sweep */
+    body::after{
+      content:"";
+      position:fixed;
+      inset:-40%;
+      background:
+        conic-gradient(from 210deg,
+          rgba(255,255,255,.0),
+          rgba(255,255,255,.18),
+          rgba(255,255,255,.0),
+          rgba(0,0,0,.12),
+          rgba(255,255,255,.0)
+        );
+      filter: blur(40px);
+      opacity:.35;
+      animation: sweep 14s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes sweep{
+      0%{ transform: rotate(0deg); }
+      100%{ transform: rotate(360deg); }
+    }
+
+    /* micro grain */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.14'/%3E%3C/svg%3E");
+      opacity:.14;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+
+    .wrap{
+      width:min(1000px, 92vw);
+      margin:0 auto;
+      min-height:100svh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding: clamp(16px, 4vw, 28px) 10px;
+      position:relative;
+      z-index:2;
+      gap: clamp(10px, 2.4vw, 18px);
+    }
+
+    .top{
+      text-align:center;
+    }
+
+    .brand{
+      margin:0;
+      font-size:var(--brandSize);
+      letter-spacing: clamp(2px, .6vw, 3px);
+      font-weight:900;
+      text-transform:uppercase;
+      color: rgba(11,11,13,.92);
+      line-height:1.05;
+    }
+
+    .headline{
+      margin:10px 0 0 0;
+      font-size:var(--headSize);
+      font-weight:900;
+      letter-spacing:.8px;
+      color: rgba(11,11,13,.88);
+      line-height:1.2;
+    }
+
+    .desc{
+      margin:10px auto 0 auto;
+      max-width:760px;
+      font-size:var(--descSize);
+      line-height:1.65;
+      color:var(--muted);
+      padding: 0 clamp(4px, 2vw, 12px);
+    }
+
+    .grid{
+      margin-top: clamp(12px, 2.6vw, 24px);
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      perspective: 1200px;
+      align-items:stretch;
+    }
+
+    .card{
+      position:relative;
+      border-radius: var(--radius);
+      padding: var(--pad);
+      background: linear-gradient(180deg, var(--glass), var(--glass2));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow:hidden;
+      transform-style: preserve-3d;
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+      min-height: clamp(210px, 28vw, 280px);
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      pointer-events:none;
+      box-shadow: inset 0 0 0 1px var(--stroke2);
+      opacity:.55;
+    }
+
+    .shine{
+      position:absolute;
+      inset:-1px;
+      border-radius: var(--radius);
+      background: radial-gradient(700px 420px at var(--mx, 20%) var(--my, 20%),
+        rgba(255,255,255,.55),
+        rgba(255,255,255,.18) 25%,
+        transparent 55%
+      );
+      opacity:.0;
+      transition: opacity .18s ease;
+      pointer-events:none;
+    }
+    .card:hover .shine{ opacity:.85; }
+
+    .glow{
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .22s ease;
+    }
+    .card:hover .glow{ opacity:1; }
+
+    .kicker{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: clamp(10px, 2vw, 14px);
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background: var(--accent, #000);
+      box-shadow: 0 0 18px rgba(0,0,0,.12);
+      flex:0 0 auto;
+    }
+
+    .pill{
+      font-size: clamp(10px, 2.2vw, 11px);
+      font-weight:900;
+      letter-spacing: clamp(1.2px, .4vw, 1.7px);
+      padding: 7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(11,11,13,.14);
+      background: rgba(255,255,255,.58);
+      color: rgba(11,11,13,.82);
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+
+    .card h3{
+      margin:0;
+      font-size: clamp(18px, 3.6vw, 20px);
+      letter-spacing: clamp(1.6px, .7vw, 2.3px);
+      font-weight:900;
+      text-transform:uppercase;
+      line-height:1.1;
+    }
+
+    .card p{
+      margin:10px 0 12px 0;
+      font-size: clamp(12.6px, 2.8vw, 13px);
+      line-height:1.55;
+      color: rgba(11,11,13,.72);
+    }
+
+    .bullets{
+      margin:0;
+      padding-left:16px;
+      font-size: clamp(12px, 2.7vw, 12.5px);
+      line-height:1.55;
+      color: rgba(11,11,13,.70);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-top: clamp(12px, 2.6vw, 16px);
+      padding-top: clamp(10px, 2.2vw, 14px);
+      border-top:1px solid rgba(11,11,13,.08);
+    }
+
+    .primary{
+      border:none;
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight:900;
+      letter-spacing: 1.6px;
+      text-transform:uppercase;
+      font-size: 11px;
+      background: rgba(11,11,13,.90);
+      color:#fff;
+      transition:.18s ease;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+      touch-action: manipulation;
+    }
+
+    .primary:hover{ transform: translateY(-1px); background: rgba(11,11,13,.98); }
+    .primary:active{ transform: translateY(1px) scale(.99); }
+
+    .primary .icon{
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    .ghost{
+      border:none;
+      cursor:pointer;
+      background: transparent;
+      color: rgba(11,11,13,.82);
+      font-weight:900;
+      letter-spacing: 1.4px;
+      text-transform:uppercase;
+      font-size: 11px;
+      padding: 12px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(11,11,13,.12);
+      transition:.18s ease;
+      touch-action: manipulation;
+    }
+
+    .ghost:hover{ background: rgba(255,255,255,.55); transform: translateY(-1px); }
+    .ghost:active{ transform: translateY(1px) scale(.99); }
+
+    .footer{
+      margin:0 auto;
+      max-width:760px;
+      text-align:center;
+      font-size: clamp(11px, 2.6vw, 12px);
+      line-height:1.55;
+      mix-blend-mode:difference;
+      color: rgba(255,255,255,.86);
+      opacity:.85;
+      padding: 0 clamp(6px, 2vw, 12px);
+    }
+
+    .user{ --accent: var(--user); }
+    .user .glow{
+      background: radial-gradient(900px 520px at 15% 20%, rgba(0,188,212,.28), transparent 60%);
+    }
+
+    .business{ --accent: var(--biz); }
+    .business .glow{
+      background: radial-gradient(900px 520px at 15% 20%, rgba(255,179,0,.28), transparent 60%);
+    }
+
+    .card:hover{
+      border-color: rgba(11,11,13,.18);
+      box-shadow: 0 34px 95px rgba(0,0,0,.16);
+    }
+
+    /* ---- MOBILE: stack + disable heavy tilt on touch ---- */
+    @media (max-width: 860px){
+      .grid{ grid-template-columns:1fr; }
+      .card{ min-height: auto; }
+    }
+
+    /* very small phones */
+    @media (max-width: 390px){
+      .actions{ gap:8px; }
+      .primary .icon{ width:32px; height:32px; }
+      .pill{ padding:6px 9px; }
+    }
+
+    /* iOS notch safe padding */
+    .safePad{
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap safePad">
+    <div class="top">
+      <h1 class="brand">SOULFLAME</h1>
+      <h2 class="headline">Избери режим</h2>
+      <p class="desc">
+        <b>USER</b> — ако търсиш сервиз около теб.  
+        <b>BUSINESS</b> — ако управляваш сервиз и искаш повече клиенти + профил в мрежата.
+      </p>
+    </div>
+
+    <div class="grid">
+      <!-- USER -->
+      <div class="card user" data-role="user">
+        <div class="shine"></div>
+        <div class="glow"></div>
+
+        <div class="kicker">
+          <div class="dot" aria-hidden="true"></div>
+          <span class="pill">За шофьори</span>
+        </div>
+
+        <h3>USER</h3>
+        <p>Намираш доверени сервизи около теб за секунди.</p>
+        <ul class="bullets">
+          <li>Карта + търсене по услуга</li>
+          <li>Обаждане и навигация с 1 натискане</li>
+          <li>Запазване на любими сервизи</li>
+        </ul>
+
+        <div class="actions">
+          <button class="ghost" type="button" onclick="previewUser()">Preview</button>
+
+          <button class="primary" type="button" onclick="goUser()">
+            Enter
+            <span class="icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.95)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="card business" data-role="business">
+        <div class="shine"></div>
+        <div class="glow"></div>
+
+        <div class="kicker">
+          <div class="dot" aria-hidden="true"></div>
+          <span class="pill">За сервизи</span>
+        </div>
+
+        <h3>BUSINESS</h3>
+        <p>Появяваш се пред клиенти около теб и управляваш профила си.</p>
+        <ul class="bullets">
+          <li>Claim / верификация чрез QR код</li>
+          <li>Профил с услуги, снимки и контакти</li>
+          <li>Заявки и резервации (след MVP)</li>
+        </ul>
+
+        <div class="actions">
+          <button class="ghost" type="button" onclick="previewBiz()">Preview</button>
+
+          <button class="primary" type="button" onclick="goBusiness()">
+            Enter
+            <span class="icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.95)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      След избора може да отворим вход с Google (Gmail) според режима.
+      Можеш да смениш режима по-късно.
+    </div>
+  </div>
+
+  <script>
+
+// --------- REAL ROUTES (SoulFlame CarService) ----------
+function goUser(){
+  window.location.href = "access_location_user.html";
+}
+
+function goBusiness(){
+  window.location.href = "access_location_business.html";
+}
+
+function previewUser(){
+  window.location.href = "map.html"; // preview карта
+}
+
+function previewBiz(){
+  alert("BUSINESS: Claim сервиз, Google профил и клиенти");
+}
+
+
+    // ------- Tesla micro-interactions (desktop tilt only) -------
+    const cards = document.querySelectorAll(".card");
+
+    // detect touch devices (phones)
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+
+    if(!isTouch){
+      cards.forEach(card => {
+        card.addEventListener("mousemove", (e) => {
+          const r = card.getBoundingClientRect();
+          const x = e.clientX - r.left;
+          const y = e.clientY - r.top;
+
+          const mx = (x / r.width) * 100;
+          const my = (y / r.height) * 100;
+          card.style.setProperty("--mx", mx + "%");
+          card.style.setProperty("--my", my + "%");
+
+          const rx = ((y / r.height) - 0.5) * -8;
+          const ry = ((x / r.width) - 0.5) * 10;
+          card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
+        });
+
+        card.addEventListener("mouseleave", () => {
+          card.style.transform = `rotateX(0deg) rotateY(0deg)`;
+        });
+
+        card.addEventListener("click", (e) => {
+          if (e.target.closest("button")) return;
+          if (card.classList.contains("user")) goUser();
+          if (card.classList.contains("business")) goBusiness();
+        });
+      });
+    } else {
+      // On phone: no tilt, but full-card tap works
+      cards.forEach(card => {
+        card.addEventListener("click", (e) => {
+          if (e.target.closest("button")) return;
+          if (card.classList.contains("user")) goUser();
+          if (card.classList.contains("business")) goBusiness();
+        });
+      });
+    }
+
+    // keyboard shortcuts (desktop)
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "1") goUser();
+      if(e.key === "2") goBusiness();
+    });
+  </script>
+</body>
+</html>

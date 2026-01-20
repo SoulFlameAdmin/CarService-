@@ -1,0 +1,18 @@
+
+# CODE | NAME | LAT | LNG | SOURCE
+
+SF-SLV-001 | Pro Service Sliven | ул. „Димитър Пехливанов-Добрович“ 20 | 42.68347640 | 26.29980090 | Google Maps daddr
+SF-SLV-002 | Райкови Сервиз ООД | бул. „Хаджи Димитър“ 42 | 42.65760450 | 26.32824140 | Google Maps daddr
+SF-SLV-003 | Автосервиз Изток | бул. „Бургаско шосе“ | 42.68388030 | 26.31270380 | Google Maps daddr
+SF-SLV-004 | Z&D Autoservice | Unnamed Road, Сливен | 42.66240110 | 26.30028110 | Google Maps daddr
+SF-SLV-005 | Service Enterprise | ул. „Банско шосе“ 7 | 42.68028350 | 26.30391000 | Google Maps daddr
+SF-SLV-006 | Bosch Car Service – Павлов автосервиз | ул. „Самуиловско шосе“ 24 | 42.68040720 | 26.30478630 | Google Maps daddr
+SF-SLV-007 | Сервиз „Касандра Ауто“ | ж.к. Стоян Заимов | 42.68254000 | 26.30237270 | Google Maps daddr
+SF-SLV-008 | Auto MIHAILOV | бул. „Бургаско шосе“ 47 | 42.67411010 | 26.34180370 | Google Maps daddr
+SF-SLV-009 | АВТОГУМИ СЛИВЕН ООД | бул. „Христо Ботев“ 18 | 42.67961200 | 26.32321400 | Google Maps place
+SF-SLV-010 | Евросервиз | бул. „Христо Ботев“ 8 | 42.67970200 | 26.32274200 | Google Maps place
+SF-SLV-011 | Автосервиз РЕЯ | ул. „Светлина“ 7Б | 42.67652100 | 26.32881100 | Google Maps place
+SF-SLV-012 | СИС КАРГО АВТОСЕРВИЗ | ул. „Самуиловско шосе“ 24 | 42.68039000 | 26.30476000 | Google Maps place
+SF-SLV-013 | Автосервиз ПЛАЧКОВИ | ж.к. „Дружба“ 87 | 42.68124000 | 26.33342000 | Google Maps place
+SF-SLV-014 | МАКС СЕРВИЗ / MAX SERVICE | гр. Сливен | 42.68500000 | 26.32000000 | City-center fallback
+SF-SLV-015 | Service SOS | PlusCode J8RJ+MW | 42.68000000 | 26.33000000 | Google PlusCode

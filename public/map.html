@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>SoulFlame CarService — FREE Realtime Search</title>
+  <style>
+    :root{
+      --bg:#0b0b0d;
+      --glass: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.14);
+      --muted: rgba(255,255,255,.70);
+      --txt:#fff;
+      --btn:#ffffff;
+      --btnTxt:#0b0b0d;
+      --btn2: transparent;
+      --btn2Stroke: rgba(255,255,255,.18);
+      --shadow: 0 18px 70px rgba(0,0,0,.45);
+      --r: 20px;
+    }
+
+    html,body{height:100%;margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--txt)}
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+    }
+    .card{
+      width:min(680px,94vw);
+      background:var(--glass);
+      border:1px solid var(--stroke);
+      border-radius:var(--r);
+      padding:18px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+      line-height:1.2;
+    }
+    .sub{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+      max-width:58ch;
+    }
+
+    .chipRow{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip.active{
+      background:#fff;
+      color:#0b0b0d;
+      border-color:#fff;
+    }
+
+    .row{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    button{
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:13px 14px;
+      font-weight:900;
+      letter-spacing:.3px;
+    }
+    .primary{
+      background:var(--btn);
+      color:var(--btnTxt);
+      flex:1;
+      min-width:220px;
+    }
+    .secondary{
+      background:var(--btn2);
+      color:#fff;
+      border:1px solid var(--btn2Stroke);
+    }
+
+    .status{
+      margin-top:12px;
+      font-size:12px;
+      color:rgba(255,255,255,.90);
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      line-height:1.5;
+    }
+
+    .mini{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      color:rgba(255,255,255,.60);
+      font-size:12px;
+    }
+    a{color:#fff;text-decoration:none;font-weight:900}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <h1>Автосервизи около теб — Realtime (FREE)</h1>
+          <div class="sub">
+            Няма API. Няма Billing. Взимаме само GPS и отваряме Google Maps търсене на твоята точна локация.
+          </div>
+        </div>
+        <div class="mini">
+          <div>Mode: <b>FREE</b></div>
+          <div><a href="#" id="openLast">Отвори последното</a></div>
+        </div>
+      </div>
+
+      <!-- Категории (сменят query-то) -->
+      <div class="chipRow" id="chipRow">
+        <div class="chip active" data-q="автосервиз">Автосервиз</div>
+        <div class="chip" data-q="гуми сервиз">Гуми</div>
+        <div class="chip" data-q="автоелектричар">Електро</div>
+        <div class="chip" data-q="газов инжекцион сервиз">Газ</div>
+        <div class="chip" data-q="автоклиматици сервиз">Климатици</div>
+        <div class="chip" data-q="пътна помощ">Пътна помощ</div>
+      </div>
+
+      <div class="row">
+        <button class="primary" id="btnGPS">ОТВОРИ ОКОЛО МЕН (GPS)</button>
+        <button class="secondary" id="btnSameTab">В СЪЩИЯ TAB</button>
+        <button class="secondary" id="btnSliven">Сливен (fallback)</button>
+      </div>
+
+      <div class="status" id="status">Готов. Избери категория и натисни “ОКОЛО МЕН”.</div>
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const chipRow = document.getElementById("chipRow");
+    const openLast = document.getElementById("openLast");
+
+    const KEY_LAST_URL = "sf_last_google_maps_url";
+    let openMode = "_blank"; // default: new tab
+    let currentQuery = "автосервиз";
+
+    function setStatus(t){ statusEl.textContent = t; }
+
+    function buildGoogleMapsSearchUrl(lat, lng, zoom = 13, query = "автосервиз") {
+      const q = encodeURIComponent(query);
+      return `https://www.google.com/maps/search/${q}/@${lat},${lng},${zoom}z`;
+    }
+
+    function openUrl(url){
+      localStorage.setItem(KEY_LAST_URL, url);
+      setStatus("Отварям Google Maps (realtime)…");
+      if(openMode === "_self") window.location.href = url;
+      else window.open(url, "_blank");
+    }
+
+    function openSliven(){
+      // fallback ако няма GPS
+      const url = "https://www.google.com/maps/search/avtoservizi/@42.6685158,26.3489067,12.59z?entry=ttu";
+      setStatus("Fallback: Сливен…");
+      openUrl(url);
+    }
+
+    function openWithGPS(){
+      if(!navigator.geolocation){
+        setStatus("Браузърът няма геолокация → fallback.");
+        return openSliven();
+      }
+
+      setStatus("Искам локация… натисни Allow.");
+      navigator.geolocation.getCurrentPosition(
+        (pos)=>{
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          const url = buildGoogleMapsSearchUrl(lat, lng, 13, currentQuery);
+          setStatus(`GPS OK: ${lat.toFixed(5)}, ${lng.toFixed(5)} → "${currentQuery}"`);
+          openUrl(url);
+        },
+        ()=>{
+          setStatus("Няма достъп до локация → fallback (Сливен).");
+          openSliven();
+        },
+        { enableHighAccuracy:true, timeout:12000, maximumAge:5000 }
+      );
+    }
+
+    // chips: избира query
+    chipRow.addEventListener("click", (e)=>{
+      const chip = e.target.closest(".chip");
+      if(!chip) return;
+
+      [...chipRow.querySelectorAll(".chip")].forEach(c=>c.classList.remove("active"));
+      chip.classList.add("active");
+
+      currentQuery = chip.getAttribute("data-q") || "автосервиз";
+      setStatus(`Категория: "${currentQuery}". Натисни “ОКОЛО МЕН”.`);
+    });
+
+    // buttons
+    document.getElementById("btnGPS").addEventListener("click", openWithGPS);
+
+    document.getElementById("btnSameTab").addEventListener("click", ()=>{
+      openMode = (openMode === "_blank") ? "_self" : "_blank";
+      setStatus(openMode === "_self" ? "Режим: Отваря в СЪЩИЯ TAB." : "Режим: Отваря в НОВ TAB.");
+    });
+
+    document.getElementById("btnSliven").addEventListener("click", openSliven);
+
+    // open last
+    openLast.addEventListener("click", (e)=>{
+      e.preventDefault();
+      const last = localStorage.getItem(KEY_LAST_URL);
+      if(!last){ setStatus("Нямаш последно търсене още."); return; }
+      openUrl(last);
+    });
+  </script>
+</body>
+</html>

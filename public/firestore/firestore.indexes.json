@@ -1,0 +1,20 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "businesses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lastSeenAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "businesses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lastLocation.lat", "order": "ASCENDING" },
+        { "fieldPath": "lastLocation.lng", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

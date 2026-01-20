@@ -1,0 +1,9 @@
+cd E:\SOULFLAME_v1\CarService\public
+python -m http.server 5500
+
+
+
+
+__
+
+http://localhost:5500/screen1.html

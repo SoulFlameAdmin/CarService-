@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>SoulFlame CarService — Access (Business)</title>
+
+  <style>
+    :root{
+      --bgA:#ffffff; --bgB:#f2f4f7; --bgC:#0a0a0c;
+      --text:#0b0b0d; --muted:rgba(11,11,13,.72);
+      --glass: rgba(255,255,255,.78); --glass2: rgba(255,255,255,.60);
+      --stroke: rgba(11,11,13,.10); --stroke2: rgba(255,255,255,.28);
+      --shadow: 0 26px 80px rgba(0,0,0,.12);
+
+      --biz:#ffb300;
+
+      --radius: clamp(18px, 2.8vw, 26px);
+      --pad: clamp(14px, 3.2vw, 22px);
+      --brandSize: clamp(22px, 4.6vw, 30px);
+      --headSize: clamp(16px, 3.6vw, 20px);
+      --descSize: clamp(12.5px, 2.8vw, 13.5px);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0; min-height:100svh; overflow:hidden;
+      font-family: Arial, Helvetica, sans-serif; color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 18%, rgba(0,0,0,.06), transparent 58%),
+        radial-gradient(900px 560px at 78% 26%, rgba(0,0,0,.12), transparent 62%),
+        linear-gradient(135deg, var(--bgA), var(--bgB) 54%, var(--bgC));
+    }
+
+    body::after{
+      content:""; position:fixed; inset:-40%;
+      background: conic-gradient(from 210deg,
+        rgba(255,255,255,.0), rgba(255,255,255,.18), rgba(255,255,255,.0),
+        rgba(0,0,0,.12), rgba(255,255,255,.0)
+      );
+      filter: blur(40px); opacity:.35; animation: sweep 14s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes sweep{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+
+    body::before{
+      content:""; position:fixed; inset:0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.14'/%3E%3C/svg%3E");
+      opacity:.14; mix-blend-mode:overlay; pointer-events:none;
+    }
+
+    .wrap{
+      width:min(980px, 92vw);
+      margin:0 auto; min-height:100svh;
+      display:flex; flex-direction:column; justify-content:center;
+      padding: clamp(16px, 4vw, 28px) 10px;
+      position:relative; z-index:2;
+      gap: clamp(12px, 2.8vw, 20px);
+    }
+
+    .top{ text-align:center; }
+    .brand{
+      margin:0; font-size:var(--brandSize);
+      letter-spacing: clamp(2px, .6vw, 3px);
+      font-weight:900; text-transform:uppercase;
+      color: rgba(11,11,13,.92); line-height:1.05;
+    }
+    .headline{
+      margin:10px 0 0 0; font-size:var(--headSize);
+      font-weight:900; letter-spacing:.8px;
+      color: rgba(11,11,13,.88); line-height:1.2;
+    }
+    .desc{
+      margin:10px auto 0 auto; max-width:820px;
+      font-size:var(--descSize); line-height:1.65;
+      color:var(--muted); padding:0 clamp(4px, 2vw, 12px);
+    }
+
+    .panel{
+      position:relative; border-radius: var(--radius);
+      padding: var(--pad);
+      background: linear-gradient(180deg, var(--glass), var(--glass2));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      overflow:hidden;
+      --accent: var(--biz);
+    }
+    .panel::after{
+      content:""; position:absolute; inset:0; border-radius: var(--radius);
+      pointer-events:none; box-shadow: inset 0 0 0 1px var(--stroke2);
+      opacity:.55;
+    }
+
+    .row{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; flex-wrap:wrap;
+    }
+
+    .mode{
+      display:flex; align-items:center; gap:10px;
+      font-weight:900; letter-spacing:1.2px; text-transform:uppercase;
+      font-size:12px; color: rgba(11,11,13,.85);
+    }
+    .dot{ width:10px;height:10px;border-radius:999px; background: var(--accent); box-shadow: 0 0 18px rgba(0,0,0,.12); }
+
+    .step{
+      margin-top:10px;
+      display:flex; gap:10px; flex-wrap:wrap;
+      font-size:12px; font-weight:900; letter-spacing:.6px;
+      color: rgba(11,11,13,.78);
+    }
+    .chip{
+      border:1px solid rgba(11,11,13,.12);
+      background: rgba(255,255,255,.65);
+      padding:7px 10px; border-radius:999px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .chip strong{ color: rgba(11,11,13,.92); }
+    .chip.ok{ border-color: rgba(255,179,0,.42); }
+    .chip.no{ border-color: rgba(220,38,38,.20); }
+
+    .actions{
+      margin-top:14px;
+      display:flex; gap:12px; flex-wrap:wrap;
+      align-items:center; justify-content:space-between;
+    }
+
+    .btn{
+      border:none; cursor:pointer; border-radius:14px;
+      padding:12px 14px;
+      font-weight:900; letter-spacing:1.6px; text-transform:uppercase;
+      font-size:11px;
+      transition:.18s ease;
+      user-select:none; touch-action: manipulation;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      min-width: 220px;
+    }
+    .btnPrimary{ background: rgba(11,11,13,.92); color:#fff; }
+    .btnPrimary:hover{ transform: translateY(-1px); background: rgba(11,11,13,.99); }
+    .btnPrimary:active{ transform: translateY(1px) scale(.99); }
+
+    .btnGhost{
+      background: transparent; color: rgba(11,11,13,.82);
+      border:1px solid rgba(11,11,13,.12);
+      min-width: 180px;
+    }
+    .btnGhost:hover{ background: rgba(255,255,255,.55); transform: translateY(-1px); }
+    .btnGhost:active{ transform: translateY(1px) scale(.99); }
+
+    .gIcon{
+      width:34px;height:34px;border-radius:12px;
+      display:grid;place-items:center;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      flex:0 0 auto;
+    }
+
+    .status{
+      margin-top:12px;
+      font-size:12px; line-height:1.45;
+      color: rgba(11,11,13,.78);
+      background: rgba(255,255,255,.55);
+      border:1px solid rgba(11,11,13,.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display:none;
+      white-space: pre-wrap;
+    }
+    .status.show{ display:block; }
+
+    .userBox{
+      margin-top:12px;
+      display:none;
+      border:1px solid rgba(11,11,13,.10);
+      background: rgba(255,255,255,.55);
+      border-radius: 16px;
+      padding: 10px 12px;
+      align-items:center;
+      gap:10px;
+    }
+    .userBox.show{ display:flex; }
+    .avatar{
+      width:36px;height:36px;border-radius:12px;
+      object-fit:cover;
+      border:1px solid rgba(11,11,13,.12);
+      background:#fff;
+    }
+    .userMeta{ min-width:0; }
+    .userName{ font-weight:900; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .userMail{ font-size:12px; opacity:.72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .box{
+      margin-top:12px;
+      border:1px solid rgba(11,11,13,.10);
+      background: rgba(255,255,255,.55);
+      border-radius: 16px;
+      padding: 12px;
+      display:none;
+    }
+    .box.show{ display:block; }
+    .field{ display:flex; flex-direction:column; gap:8px; }
+    label{ font-size:12px; color: rgba(11,11,13,.70); font-weight:800; letter-spacing:.4px; }
+    input{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(11,11,13,.12);
+      padding:12px 12px;
+      outline:none;
+      font-size:14px;
+      background: rgba(255,255,255,.80);
+      color: rgba(11,11,13,.92);
+      font-weight:900;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+    }
+    input:focus{
+      border-color: rgba(11,11,13,.22);
+      box-shadow: 0 0 0 4px rgba(0,0,0,.08);
+    }
+    .match{
+      margin-top:10px;
+      font-size:12px;
+      line-height:1.55;
+      color: rgba(11,11,13,.78);
+      border:1px solid rgba(11,11,13,.10);
+      background: rgba(255,255,255,.65);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display:none;
+    }
+    .match.show{ display:block; }
+
+    .footer{
+      margin:0 auto; max-width:840px; text-align:center;
+      font-size: clamp(11px, 2.6vw, 12px);
+      line-height:1.55;
+      mix-blend-mode:difference;
+      color: rgba(255,255,255,.86);
+      opacity:.85;
+      padding: 0 clamp(6px, 2vw, 12px);
+    }
+
+    .safePad{
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    @media (max-width:520px){
+      .btn{ min-width: 100%; }
+      .actions{ justify-content:stretch; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap safePad">
+    <div class="top">
+      <h1 class="brand">SOULFLAME</h1>
+      <h2 class="headline">Business — Вход + Код</h2>
+      <p class="desc">
+        Влизаш с Google (бизнес профил) → въвеждаш кода от визитката → активираш точния сервиз → отваряме картата.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <div class="mode">
+          <span class="dot" aria-hidden="true"></span>
+          <span>BUSINESS MODE</span>
+        </div>
+
+        <button class="btn btnGhost" type="button" id="btnBack">
+          <span>Назад</span>
+          <span class="gIcon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M15 6l-6 6 6 6" stroke="rgba(11,11,13,.85)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+
+      <div class="step" style="margin-top:12px">
+        <div class="chip" id="chipLogin">1) <strong>Google вход</strong></div>
+        <div class="chip" id="chipCode">2) <strong>Код</strong></div>
+        <div class="chip" id="chipGo">3) <strong>Карта</strong></div>
+      </div>
+
+      <div class="userBox" id="userBox">
+        <img class="avatar" id="avatar" alt="Business" />
+        <div class="userMeta">
+          <div class="userName" id="userName">—</div>
+          <div class="userMail" id="userMail">—</div>
+        </div>
+        <button class="btn btnGhost" type="button" id="btnLogout" style="min-width:auto;padding:10px 12px">
+          <span>Изход</span>
+        </button>
+      </div>
+
+      <div class="actions" id="actionsLogin">
+        <button class="btn btnPrimary" type="button" id="btnGoogle">
+          <span>Вход с Google</span>
+          <span class="gIcon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 48 48">
+              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.655 32.659 29.227 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.651-.389-3.917z"/>
+              <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 19.001 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4c-7.682 0-14.41 4.337-17.694 10.691z"/>
+              <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.197l-6.19-5.238C29.239 35.091 26.715 36 24 36c-5.205 0-9.62-3.317-11.283-7.946l-6.522 5.025C9.444 39.556 16.227 44 24 44z"/>
+              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.244-2.231 4.148-4.084 5.565l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.651-.389-3.917z"/>
+            </svg>
+          </span>
+        </button>
+
+        <button class="btn btnGhost" type="button" id="btnSkipLogin">
+          <span>Само тест (без вход)</span>
+          <span class="gIcon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M9 6l6 6-6 6" stroke="rgba(11,11,13,.85)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+
+      <div class="box" id="codeBox">
+        <div class="field">
+          <label for="bizCode">Код от визитката</label>
+          <input id="bizCode" type="text" placeholder="SF-SLV-004" autocomplete="off" />
+        </div>
+
+        <div class="match" id="matchBox"></div>
+
+        <div class="actions" style="margin-top:12px">
+          <button class="btn btnPrimary" type="button" id="btnActivate">
+            <span>Активирай и влез</span>
+            <span class="gIcon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 6l6 6-6 6" stroke="rgba(255,255,255,.95)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+
+          <button class="btn btnGhost" type="button" id="btnClear">
+            <span>Изчисти</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="status" id="statusBox"></div>
+    </div>
+
+    <div class="footer">
+      След това: <b>map_business.html</b> • Верификация на кода от <b>sliven_avtoservizi.txt</b>
+    </div>
+  </div>
+
+  <script type="module">
+    // Firebase ядро
+    import { auth } from "./googlelogin/firebase.js";
+    import { googleLogin, handleRedirectResult, friendlyAuthError } from "./googlelogin/google-auth.js";
+    // ВАЖНО: версията да е една и съща (10.14.1), иначе стават странни бъгове
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    // ====== CONFIG ======
+    const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt"; // работи на localhost и Vercel
+    const ACTIVE_KEY = "sf_cs_activated_services";          // списък активирани сервизи
+    const BASE = new URL(".", window.location.href);        // за пътища, които работят навсякъде
+
+    // ====== UI refs ======
+    const statusBox = document.getElementById("statusBox");
+    const chipLogin = document.getElementById("chipLogin");
+    const chipCode = document.getElementById("chipCode");
+    const chipGo   = document.getElementById("chipGo");
+
+    const actionsLogin = document.getElementById("actionsLogin");
+    const userBox = document.getElementById("userBox");
+    const avatar = document.getElementById("avatar");
+    const userName = document.getElementById("userName");
+    const userMail = document.getElementById("userMail");
+
+    const btnGoogle = document.getElementById("btnGoogle");
+    const btnSkipLogin = document.getElementById("btnSkipLogin");
+    const btnLogout = document.getElementById("btnLogout");
+    const btnBack = document.getElementById("btnBack");
+
+    const codeBox = document.getElementById("codeBox");
+    const bizCodeEl = document.getElementById("bizCode");
+    const matchBox = document.getElementById("matchBox");
+    const btnActivate = document.getElementById("btnActivate");
+    const btnClear = document.getElementById("btnClear");
+
+    function setStatus(msg){
+      statusBox.classList.add("show");
+      statusBox.textContent = msg;
+    }
+    function setChip(el, mode){
+      el.classList.remove("ok","no");
+      if(mode === "ok") el.classList.add("ok");
+      if(mode === "no") el.classList.add("no");
+    }
+
+    function saveLocalBizAuth(user){
+      localStorage.setItem("sf_cs_business_user", JSON.stringify({
+        uid: user?.uid || null,
+        email: user?.email || null,
+        displayName: user?.displayName || null,
+        photoURL: user?.photoURL || null,
+        mode: "business",
+        ts: new Date().toISOString()
+      }));
+    }
+
+    function normalizeCode(s){
+      return (s || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g,"-")
+        .replace(/[^A-Z0-9\-]/g,"");
+    }
+
+    function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
+
+    // ====== ВАЖНО: записваме активиран сервиз + Google профил (за map_business) ======
+    function addActivatedService(row, user){
+      const list = safeJson(localStorage.getItem(ACTIVE_KEY)) || [];
+      const code = String(row?.code || "").trim().toUpperCase();
+      if(!code) return;
+
+      const next = list.filter(x => String(x?.code || "").toUpperCase() !== code);
+      next.unshift({
+        code,
+        name: row?.name || code,
+        addr: row?.addr || "",
+        lat: row?.lat,
+        lng: row?.lng,
+        source: row?.source || "",
+        activatedAt: new Date().toISOString(),
+
+        // Google профил
+        uid: user?.uid || null,
+        email: user?.email || null,
+        displayName: user?.displayName || null,
+        photoURL: user?.photoURL || null
+      });
+
+      localStorage.setItem(ACTIVE_KEY, JSON.stringify(next.slice(0, 500)));
+    }
+
+    // ====== TXT parse ======
+    // Format: CODE | NAME | ADDRESS | LAT | LNG | SOURCE
+    function parseTxt(txt){
+      const lines = String(txt || "")
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith("#"));
+
+      const out = [];
+      for(const line of lines){
+        const parts = line.split("|").map(p => p.trim());
+        if(parts.length < 5) continue;
+
+        const code = parts[0];
+        const name = parts[1] || "Автосервиз";
+        const addr = parts[2] || "";
+        const lat  = Number(String(parts[3]).replace(",", "."));
+        const lng  = Number(String(parts[4]).replace(",", "."));
+        const source = parts.slice(5).join(" | ").trim();
+
+        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        out.push({ code, name, addr, lat, lng, source, raw: line });
+      }
+      return out;
+    }
+
+    async function fetchTxt(){
+      const res = await fetch(DATA_URL, { cache: "no-store" });
+      if(!res.ok) throw new Error("Не мога да заредя TXT (" + res.status + "). Провери public/QR_serveses/...");
+      return await res.text();
+    }
+
+    let services = [];
+    async function loadServicesOnce(){
+      if(services.length) return services;
+      const txt = await fetchTxt();
+      services = parseTxt(txt);
+      return services;
+    }
+
+    function showLoggedIn(user){
+      actionsLogin.style.display = "none";
+      codeBox.classList.add("show");
+      userBox.classList.add("show");
+
+      avatar.src = user?.photoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='18' fill='%23ffffff'/%3E%3Cpath d='M40 41c9 0 16-7 16-16S49 9 40 9 24 16 24 25s7 16 16 16zm0 6c-13 0-24 7-24 16v4h48v-4c0-9-11-16-24-16z' fill='%230b0b0d' fill-opacity='.55'/%3E%3C/svg%3E";
+      userName.textContent = user?.displayName || "Business";
+      userMail.textContent = user?.email || "";
+
+      setChip(chipLogin, "ok");
+      setChip(chipCode, "no");
+      setChip(chipGo, "no");
+    }
+
+    function showLoggedOut(){
+      actionsLogin.style.display = "flex";
+      codeBox.classList.remove("show");
+      userBox.classList.remove("show");
+      matchBox.classList.remove("show");
+      matchBox.textContent = "";
+
+      setChip(chipLogin, "no");
+      setChip(chipCode, "no");
+      setChip(chipGo, "no");
+    }
+
+    function setMatch(row){
+      if(!row){
+        matchBox.classList.remove("show");
+        matchBox.textContent = "";
+        return;
+      }
+      matchBox.classList.add("show");
+      matchBox.innerHTML =
+        `<b>Намерен сервиз</b><br>` +
+        `<b>${escapeHtml(row.code)}</b> — ${escapeHtml(row.name)}<br>` +
+        `${row.addr ? escapeHtml(row.addr) + "<br>" : ""}` +
+        `<span style="opacity:.85">GPS: ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}</span>`;
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function goToBusinessMap(code){
+      const u = new URL("map_business.html", BASE);
+      u.searchParams.set("biz", code);
+      window.location.href = u.toString();
+    }
+
+    async function validateCode(code){
+      const list = await loadServicesOnce();
+      const key = normalizeCode(code);
+      return list.find(x => normalizeCode(x.code) === key) || null;
+    }
+
+    // ===== Auth =====
+    async function doGoogleLogin(){
+      if(location.protocol === "file:"){
+        setStatus("❌ Отвори през http://localhost или Vercel (не file://).");
+        return;
+      }
+      setStatus("⌛ Вход с Google…");
+      try{
+        const user = await googleLogin();
+        if(user){
+          saveLocalBizAuth(user);
+          showLoggedIn(user);
+          setStatus("✅ Влязъл си. Зареждам кодовете…");
+          await loadServicesOnce();
+          setStatus("✅ Готово. Въведи код (пример: SF-SLV-004).");
+        }else{
+          setStatus("⌛ Redirect вход… довършвам…");
+        }
+      }catch(err){
+        console.error(err);
+        setStatus("❌ " + friendlyAuthError(err));
+      }
+    }
+
+    async function handleRedirectIfAny(){
+      try{
+        const user = await handleRedirectResult();
+        if(user){
+          saveLocalBizAuth(user);
+          showLoggedIn(user);
+          setStatus("✅ Вход (redirect). Зареждам кодовете…");
+          await loadServicesOnce();
+          setStatus("✅ Готово. Въведи код (пример: SF-SLV-004).");
+        }
+      }catch(err){
+        console.error(err);
+      }
+    }
+
+    // ===== Events =====
+    btnBack.addEventListener("click", () => window.location.href = new URL("screen2.html", BASE).toString());
+    btnGoogle.addEventListener("click", doGoogleLogin);
+
+    btnSkipLogin.addEventListener("click", async () => {
+      setStatus("⚠️ Тест режим: без вход. Зареждам кодовете…");
+      actionsLogin.style.display = "none";
+      codeBox.classList.add("show");
+      setChip(chipLogin, "ok");
+      await loadServicesOnce();
+      setStatus("✅ Тест режим. Въведи код.");
+    });
+
+    btnLogout.addEventListener("click", async () => {
+      try{
+        await signOut(auth);
+        localStorage.removeItem("sf_cs_business_user");
+        localStorage.removeItem("sf_cs_business_active");
+        // НЕ трием ACTIVE_KEY – това е списък “активирани сервизи”
+        setStatus("✅ Изход. Влез пак с Google.");
+        showLoggedOut();
+      }catch(e){
+        setStatus("❌ Грешка при изход.");
+      }
+    });
+
+    bizCodeEl.addEventListener("input", async () => {
+      const code = normalizeCode(bizCodeEl.value);
+      bizCodeEl.value = code;
+      if(code.length < 6){ setMatch(null); setChip(chipCode, "no"); return; }
+      try{
+        const row = await validateCode(code);
+        setMatch(row);
+        setChip(chipCode, row ? "ok" : "no");
+      }catch(e){
+        console.warn(e);
+        setMatch(null);
+        setChip(chipCode, "no");
+      }
+    });
+
+    btnClear.addEventListener("click", () => {
+      bizCodeEl.value = "";
+      setMatch(null);
+      setChip(chipCode, "no");
+      setChip(chipGo, "no");
+      setStatus("Изчистено. Въведи код.");
+      bizCodeEl.focus();
+    });
+
+    btnActivate.addEventListener("click", async () => {
+      const code = normalizeCode(bizCodeEl.value);
+      if(!code){ setStatus("⚠️ Въведи код (пример: SF-SLV-004)."); return; }
+
+      try{
+        setStatus("⌛ Проверявам кода…");
+        const row = await validateCode(code);
+        if(!row){
+          setStatus("❌ Няма такъв код в TXT: " + code);
+          setChip(chipCode, "no");
+          return;
+        }
+
+        // 1) активен сервиз (локално – за бърз MVP)
+        localStorage.setItem("sf_cs_business_active", JSON.stringify({
+          code: row.code,
+          name: row.name,
+          addr: row.addr || "",
+          lat: row.lat,
+          lng: row.lng,
+          source: row.source || "",
+          activatedAt: new Date().toISOString()
+        }));
+
+        // 2) списък активирани + Google профил
+        const currentUser = auth?.currentUser || null;
+        addActivatedService(row, currentUser);
+
+        setChip(chipCode, "ok");
+        setChip(chipGo, "ok");
+        setStatus("✅ Активирано: " + row.code + " — " + row.name + "\nОтварям картата…");
+        setTimeout(() => goToBusinessMap(row.code), 250);
+
+      }catch(err){
+        console.error(err);
+        setStatus("❌ Грешка: " + (err?.message || err));
+      }
+    });
+
+    // ===== Boot =====
+    (async function boot(){
+      setStatus("Зареждам…");
+      await handleRedirectIfAny();
+
+      onAuthStateChanged(auth, async (user) => {
+        if(user){
+          saveLocalBizAuth(user);
+          showLoggedIn(user);
+          setStatus("✅ Влязъл си. Зареждам кодовете…");
+          try{
+            await loadServicesOnce();
+            setStatus("✅ Готово. Въведи код (пример: SF-SLV-004).");
+          }catch(e){
+            setStatus("⚠️ Влязъл си, но TXT не се зарежда. Провери: " + DATA_URL);
+          }
+        }else{
+          showLoggedOut();
+          setStatus("Първо: вход с Google (Business).");
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

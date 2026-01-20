@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================
+    // USERS (крайни клиенти)
+    // =========================
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // =========================
+    // BUSINESSES (автосервизи)
+    // =========================
+    match /businesses/{bizId} {
+      // бизнесът може да си чете/пише своя профил
+      allow read, write: if request.auth != null
+        && request.auth.uid == bizId;
+
+      // потребителите могат да ЧЕТАТ (карта, близки сервизи)
+      allow read: if request.auth != null;
+    }
+
+    // =========================
+    // FUTURE: services / bookings
+    // =========================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
