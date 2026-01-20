@@ -1,0 +1,9 @@
+cd E:\SOULFLAME_v1\CarService
+
+git init
+git remote add origin https://github.com/SoulFlameAdmin/CarService-.git
+
+git add .
+git commit -m "init: CarService"
+git branch -M main
+git push -u origin main
