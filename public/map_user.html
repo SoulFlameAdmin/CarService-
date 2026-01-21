@@ -1,9 +1,11 @@
+dai cql profesional kod 
+
 <!DOCTYPE html>
 <html lang="bg">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SoulFlame CarService — Map (Business / Active)</title>
+  <title>SoulFlame CarService — Map (User)</title>
 
   <style>
     html, body { margin:0; padding:0; height:100%; font-family: Arial, sans-serif; }
@@ -18,7 +20,7 @@
 
     #panel-container{
       position:absolute; top:60px; left:15px; width:min(380px, 92vw);
-      max-height: 72vh; overflow:hidden;
+      max-height:72vh; overflow:hidden;
       z-index:999; border-radius:14px;
       background: rgba(255,255,255,.94);
       backdrop-filter: blur(10px);
@@ -60,30 +62,53 @@
       cursor:pointer;
     }
 
-    /* ✅ ВЛЯВО: аватар + gmail (вместо цифра/код) */
     .badge{
-      min-width:54px;
-      width:54px;
-      height:54px;
-      border-radius:16px;
-      background: rgba(17,24,39,.06);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      flex: 0 0 54px;
-      border:1px solid rgba(17,24,39,.10);
-    }
-    .badge img{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .badge .fallback{
+      min-width:44px; height:34px; border-radius:12px;
+      background: rgba(17,24,39,.08);
+      display:grid; place-items:center;
       font-weight:900;
-      font-size:13px;
+      padding:0 8px;
+      font-size:11px;
       color:#111827;
-      text-transform:uppercase;
+      overflow:hidden;
+    }
+
+    /* SoulFlame Active style */
+    .sfHeader{
+      display:flex; align-items:center; justify-content:space-between;
+      margin:6px 0 10px;
+      padding:8px 10px;
+      border:1px solid rgba(17,24,39,.10);
+      border-radius:14px;
+      background: rgba(17,24,39,.04);
+      font-weight:900;
+      color:#111827;
+      font-size:12px;
+      letter-spacing:.4px;
+    }
+    .sfTag{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(17,24,39,.12);
+      background:#fff;
+      font-weight:900;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .item.sfActive{
+      border-color: rgba(16,185,129,.22);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+    }
+    .badge.sf{
+      background: rgba(16,185,129,.12);
+      border:1px solid rgba(16,185,129,.18);
+    }
+    .sfMini{
+      font-size:11px;
+      font-weight:900;
+      color: rgba(17,24,39,.72);
     }
 
     .meta{ flex:1; min-width:0; }
@@ -92,17 +117,8 @@
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .addr{ font-size:12px; color:rgba(17,24,39,.72); margin-top:3px; }
-
-    /* ✅ показваме само gmail (без код) */
-    .row2{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;
-      font-size:12px; color:rgba(17,24,39,.75);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .row2 .mail{
-      overflow:hidden; text-overflow:ellipsis;
-      max-width: 100%;
-    }
+    .row2{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:12px; color:rgba(17,24,39,.75); }
+    .link{ color:#0b62ff; text-decoration:none; font-weight:900; }
 
     #status{
       position:absolute; right:12px; top:12px; z-index:1000;
@@ -112,186 +128,58 @@
       max-width:min(520px, 92vw);
     }
 
-    /* Activation card (backup) */
-    #bizCard{
-      position:absolute; left:15px; bottom:15px; z-index:1000;
-      width:min(420px, 92vw);
-      background: rgba(255,255,255,.95);
-      border:1px solid rgba(17,24,39,.12);
-      border-radius:16px;
-      box-shadow:0 12px 30px rgba(0,0,0,.18);
-      padding:12px;
-      backdrop-filter: blur(10px);
-    }
-    #bizCard h3{ margin:0 0 8px 0; font-size:14px; }
-    #bizRow{ display:flex; gap:10px; }
-    #bizCode{
-      flex:1; padding:12px; border-radius:12px;
+    /* “Търси в този район” */
+    #search-area{
+      position:absolute; top:14px; left:50%; transform:translateX(-50%);
+      z-index:1000;
+      background:#fff;
       border:1px solid rgba(17,24,39,.14);
-      outline:none;
+      padding:10px 14px;
+      border-radius:999px;
       font-weight:900;
-      text-transform:uppercase;
+      cursor:pointer;
+      display:none;
+      box-shadow:0 10px 26px rgba(0,0,0,.14);
     }
-    #bizCheck{
-      border:none; cursor:pointer; border-radius:12px;
-      padding:12px 14px; font-weight:900;
-      background:#111827; color:#fff;
-    }
-    #bizHint{
-      margin-top:8px;
-      font-size:12px; line-height:1.45;
-      color:rgba(17,24,39,.75);
-    }
+    #search-area.show{ display:block; }
 
-    @media (max-width:520px){
-      #bizRow{ flex-direction:column; }
-    }
-
-    .marker-label {
-      background: rgba(255,255,255,0.92);
+    .marker-label{
+      background: rgba(255,255,255,0.9);
       padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.15);
       white-space: nowrap;
     }
 
-    /* ===== Right Slide Panel (Business Info + Edit) ===== */
-    #rightPanel{
-      position:fixed;
-      top:0;
-      right:0;
-      height:100%;
-      width:min(420px, 92vw);
-      background: rgba(255,255,255,.96);
-      border-left:1px solid rgba(17,24,39,.12);
-      box-shadow: -18px 0 40px rgba(0,0,0,.12);
-      z-index:1200;
-      transform: translateX(105%);
-      transition: transform .25s ease;
-      backdrop-filter: blur(10px);
-      display:flex;
-      flex-direction:column;
-    }
-    #rightPanel.show{ transform: translateX(0); }
-
-    #rpHead{
-      padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px solid rgba(17,24,39,.10);
-    }
-    #rpTitle{
-      font-weight:900;
-      font-size:14px;
-      color:#111827;
-      line-height:1.2;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      flex:1;
-    }
-    #rpSub{
-      display:block;
-      font-size:12px;
-      opacity:.78;
-      font-weight:800;
-      margin-top:4px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 100%;
-    }
-    #rpClose{
-      border:none;
-      cursor:pointer;
-      border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
-      background:#111827;
-      color:#fff;
-      flex:0 0 auto;
-    }
-    #rpBody{
-      padding:12px;
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .card{
-      border:1px solid rgba(17,24,39,.10);
-      background:#fff;
-      border-radius:14px;
-      padding:12px;
-    }
-    .card h4{
-      margin:0 0 10px 0;
-      font-size:12px;
-      letter-spacing:.6px;
-      text-transform:uppercase;
-      color:rgba(17,24,39,.82);
-    }
-    .f{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-    .f label{ font-size:12px; font-weight:900; color:rgba(17,24,39,.76); }
-    .f input, .f textarea{
-      border:1px solid rgba(17,24,39,.14);
-      border-radius:12px;
-      padding:10px 10px;
-      outline:none;
-      font-weight:800;
-      font-size:13px;
-      background:#fff;
-      color:#111827;
-    }
-    .f textarea{ min-height:90px; resize:vertical; font-weight:700; line-height:1.4; }
-
-    .rpBtns{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .rpBtn{
-      border:none; cursor:pointer; border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
-      font-size:12px;
-      background:#111827;
-      color:#fff;
-    }
-    .rpBtn.secondary{
-      background:#fff; color:#111827;
-      border:1px solid rgba(17,24,39,.14);
-    }
-
-    /* Chat */
-    #chatList{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      margin-top:10px;
-    }
-    .msg{
+    /* User strip */
+    .userStrip{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
       padding:10px;
-      border-radius:12px;
       border:1px solid rgba(17,24,39,.10);
-      background: rgba(17,24,39,.03);
-      font-size:12px;
-      line-height:1.45;
+      border-radius:14px;
+      background: rgba(255,255,255,.90);
     }
-    .msg b{ display:block; font-size:11px; opacity:.75; margin-bottom:4px; }
+    .uImg{ width:32px; height:32px; border-radius:12px; object-fit:cover; border:1px solid rgba(17,24,39,.12); }
+    .uMeta{ min-width:0; flex:1; }
+    .uName{ font-weight:900; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#111827; }
+    .uMail{ font-size:12px; opacity:.72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#111827; }
 
-    /* Small helper top-right button in right panel */
-    .miniActions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
+    @media (max-width:520px){
+      #panel-container{ width:min(380px, 92vw); }
     }
   </style>
+
+  <!-- ✅ Placeholder initMap (решава “initMap is not a function”) -->
+  <script>
+    window.__sf_map_callback_called = false;
+
+    window.initMap = function () {
+      window.__sf_map_callback_called = true;
+      if (typeof window.__sf_startMap === "function") {
+        window.__sf_startMap();
+      }
+    };
+  </script>
 </head>
 
 <body>
@@ -299,174 +187,78 @@
 
   <div id="panel-container">
     <div id="panel-inner">
+      <!-- USER INFO -->
+      <div class="userStrip" id="userStrip" style="display:none">
+        <img class="uImg" id="uImg" alt="User"/>
+        <div class="uMeta">
+          <div class="uName" id="uName">—</div>
+          <div class="uMail" id="uMail">—</div>
+        </div>
+        <button class="btn secondary" id="btnLogout" type="button">Изход</button>
+      </div>
+
       <div class="panel-head">
-        <div class="panel-title">Активни сервизи сега</div>
+        <div class="panel-title" id="panelTitle">Автосервизи около теб (Google)</div>
         <div class="pill" id="countPill">0</div>
       </div>
 
       <div class="controls">
-        <button class="btn" id="btnReload">Обнови</button>
-        <button class="btn secondary" id="btnShowAll">Покажи всички</button>
+        <button class="btn" id="btnRefresh">Обнови</button>
+        <button class="btn secondary" id="btnNearMe">До мен</button>
+        <button class="btn secondary" id="btnUseTxt">TXT (fallback)</button>
       </div>
 
-      <div class="results" id="results"></div>
+      <!-- Active(SF) + Main(Google/TXT) -->
+      <div class="results" id="results">
+        <div id="sfActiveWrap" style="display:none"></div>
+        <div id="mainResults"></div>
+      </div>
     </div>
   </div>
+
+  <button id="search-area">Търсене в този район</button>
 
   <div id="map"></div>
   <div id="status">Зареждам…</div>
 
-  <div id="bizCard">
-    <h3>Business status: ONLINE ✅</h3>
-    <div id="bizRow">
-      <input id="bizCode" type="text" placeholder="Код (пример: SF-SLV-004)" />
-      <button id="bizCheck">Открий</button>
-    </div>
-    <div id="bizHint">
-      Въведи код → ще фокусирам сервиза на картата (кодът НЕ се показва никъде в списъка)
-    </div>
-  </div>
-
-  <!-- Right panel -->
-  <aside id="rightPanel">
-    <div id="rpHead">
-      <div style="min-width:0;flex:1">
-        <div id="rpTitle">—</div>
-        <small id="rpSub">—</small>
-      </div>
-      <button id="rpClose">Затвори</button>
-    </div>
-
-    <div id="rpBody">
-      <div class="card">
-        <h4>Основни</h4>
-        <div id="baseInfo" style="font-size:12px;line-height:1.55;color:rgba(17,24,39,.82)"></div>
-
-        <div class="rpBtns">
-          <button class="rpBtn secondary" id="btnOpenGoogle">Отвори в Google</button>
-          <button class="rpBtn" id="btnCenter">Центрирай</button>
-        </div>
-
-        <div class="miniActions">
-          <button class="rpBtn secondary" id="btnGoAccess">Към Business Access</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Профил (локално)</h4>
-
-        <div class="f">
-          <label>Телефон</label>
-          <input id="pPhone" placeholder="+359..." />
-        </div>
-
-        <div class="f">
-          <label>Работно време</label>
-          <input id="pHours" placeholder="Пон-Пет 09:00-18:00" />
-        </div>
-
-        <div class="f">
-          <label>Услуги (кратко)</label>
-          <input id="pServices" placeholder="Диагностика, масла, окачване..." />
-        </div>
-
-        <div class="f">
-          <label>Описание</label>
-          <textarea id="pDesc" placeholder="Напиши кратко описание за сервиза..."></textarea>
-        </div>
-
-        <div class="rpBtns">
-          <button class="rpBtn" id="btnSaveProfile">Запази</button>
-          <button class="rpBtn secondary" id="btnResetProfile">Reset</button>
-        </div>
-
-        <div style="margin-top:10px;font-size:11px;opacity:.75">
-          *MVP: пази се в localStorage. После го връзваме към Firestore.
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Чат (локално)</h4>
-        <div class="f">
-          <label>Съобщение</label>
-          <textarea id="chatText" placeholder="Напиши нещо..."></textarea>
-        </div>
-        <div class="rpBtns">
-          <button class="rpBtn" id="btnSendChat">Изпрати</button>
-          <button class="rpBtn secondary" id="btnClearChat">Изчисти чат</button>
-        </div>
-        <div id="chatList"></div>
-      </div>
-    </div>
-  </aside>
-
-  <script>
-    "use strict";
+  <script type="module">
+    // ==========================================================
+    // ✅ Map User: Google Places + TXT + Firestore Active (businesses.isActive==true)
+    // ==========================================================
 
     // ====== CONFIG ======
+    const API_KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ";
+
+    // Places Nearby
+    const RADIUS_METERS = 8000;
+    const MAX_RESULTS = 30;
+
+    // TXT fallback (Vercel case-sensitive!)
     const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
-    const AUTO_REFRESH_MS = 30 * 60 * 1000;
+    const AUTO_REFRESH_MS = 30 * 60 * 1000; // 30 мин
 
-    // ====== Active Services Storage ======
-    // Очакван формат в localStorage (от Business Access):
-    // [
-    //   { code:"SF-SLV-001", email:"...", displayName:"...", photoURL:"...", lat:..., lng:..., name:"...", addr:"..." }
-    // ]
-    const ACTIVE_KEY = "sf_cs_activated_services";
-    let viewMode = "active"; // "active" | "all"
-    let activeMetaByCode = new Map(); // CODE -> meta (google profile + activation order)
-
-    function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
-
-    function normalizeCode(s){
-      return (s || "")
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g,"-")
-        .replace(/[^A-Z0-9\-]/g,"");
-    }
-
-    function loadActiveMeta(){
-      activeMetaByCode.clear();
-      const arr = safeJson(localStorage.getItem(ACTIVE_KEY)) || [];
-      arr.forEach((a, idx) => {
-        const code = normalizeCode(a?.code || "");
-        if(!code) return;
-        activeMetaByCode.set(code, { ...a, _order: idx + 1 });
-      });
-    }
-
-    function buildActiveRows(allRows){
-      const mapAll = new Map(allRows.map(r => [normalizeCode(r.code||""), r]));
-      const activeArr = Array.from(activeMetaByCode.values())
-        .sort((a,b) => (a._order||9999) - (b._order||9999));
-
-      const out = [];
-      activeArr.forEach(a => {
-        const code = normalizeCode(a.code||"");
-        const hit = mapAll.get(code);
-        if(hit) out.push(hit);
-        else {
-          const lat = Number(a.lat), lng = Number(a.lng);
-          if(Number.isFinite(lat) && Number.isFinite(lng)){
-            out.push({ code, name:a.name||"Автосервиз", addr:a.addr||"", lat, lng, source:"activated" });
-          }
-        }
-      });
-      return out;
-    }
+    // Sliven fallback center
+    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
 
     // ====== UI ======
     const panel = document.getElementById("panel-container");
-    const resultsEl = document.getElementById("results");
+    const sfActiveWrap = document.getElementById("sfActiveWrap");
+    const resultsEl = document.getElementById("mainResults");
+
     const statusEl = document.getElementById("status");
     const countPill = document.getElementById("countPill");
-    const panelTitleEl = document.querySelector(".panel-title");
+    const panelTitle = document.getElementById("panelTitle");
 
-    const btnReload = document.getElementById("btnReload");
-    const btnShowAll = document.getElementById("btnShowAll");
-    const bizCodeEl = document.getElementById("bizCode");
-    const bizCheckBtn = document.getElementById("bizCheck");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnNearMe = document.getElementById("btnNearMe");
+    const btnUseTxt = document.getElementById("btnUseTxt");
+    const searchAreaBtn = document.getElementById("search-area");
+
+    const userStrip = document.getElementById("userStrip");
+    const uImg = document.getElementById("uImg");
+    const uName = document.getElementById("uName");
+    const uMail = document.getElementById("uMail");
+    const btnLogout = document.getElementById("btnLogout");
 
     document.getElementById("menu-button").addEventListener("click", () => {
       panel.style.display = (panel.style.display === "none") ? "block" : "none";
@@ -474,239 +266,22 @@
 
     function setStatus(t){ statusEl.textContent = t; }
 
-    function setPanelTitle(){
-      if(viewMode === "active"){
-        panelTitleEl.textContent = "Активни сервизи сега";
-        btnShowAll.textContent = "Покажи всички";
-      } else {
-        panelTitleEl.textContent = "Сливен — сервизи от TXT";
-        btnShowAll.textContent = "Покажи активни";
-      }
+    // ====== localStorage ======
+    const ACTIVE_KEY_LOCAL = "sf_cs_activated_services"; // fallback demo (само локално)
+
+    function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
+
+    function getSavedLocation(){
+      try { return JSON.parse(localStorage.getItem("sf_cs_location") || "null"); }
+      catch(e){ return null; }
     }
-
-<!-- ✅ Постави ТОЗИ ЦЯЛ БЛОК като заместиш твоя MAP секция 1:1 -->
-<script>
-"use strict";
-
-// ====== MAP ======
-let map, info;
-let markersByCode = new Map();
-let markers = [];
-let lastData = [];
-
-const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
-
-/* =========================
-   USER CENTER (GPS -> IP City/Region -> Default)
-========================= */
-const USER_CENTER_KEY = "sf_cs_user_center_v1";
-let userMarker = null;
-
-function saveCenter(obj){
-  try{ localStorage.setItem(USER_CENTER_KEY, JSON.stringify(obj)); }catch(_){}
-}
-function loadCenter(){
-  try{ return JSON.parse(localStorage.getItem(USER_CENTER_KEY) || "null"); }catch(_){ return null; }
-}
-
-function getBrowserGeo(timeoutMs=6500){
-  return new Promise((resolve) => {
-    if(!navigator.geolocation) return resolve(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve(null),
-      { enableHighAccuracy:true, timeout: timeoutMs, maximumAge: 60_000 }
-    );
-  });
-}
-
-// IP geolocation (град/област) — без ключ, работи във Vercel
-async function getIpGeo(){
-  try{
-    const r = await fetch("https://ipwho.is/?fields=success,latitude,longitude,city,region,country", { cache:"no-store" });
-    const j = await r.json();
-    if(j?.success && Number.isFinite(j.latitude) && Number.isFinite(j.longitude)){
-      return {
-        lat: j.latitude,
-        lng: j.longitude,
-        city: j.city || "",
-        region: j.region || "",
-        country: j.country || ""
-      };
-    }
-  }catch(_){}
-  return null;
-}
-
-function showUserPin(pos){
-  if(!map || !pos) return;
-
-  if(userMarker) userMarker.setMap(null);
-
-  userMarker = new google.maps.Marker({
-    position: pos,
-    map,
-    title: "Твоята локация",
-    icon: {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 7,
-      fillOpacity: 1,
-      strokeWeight: 2
-    }
-  });
-}
-
-async function resolveStartCenter(){
-  // 0) ако имаме запазен център — ползваме него
-  const saved = loadCenter();
-  if(saved?.lat && saved?.lng){
-    return { center: {lat:saved.lat, lng:saved.lng}, zoom: saved.zoom || 12, label: saved.label || "Последна локация" };
-  }
-
-  // 1) GPS
-  const geo = await getBrowserGeo();
-  if(geo){
-    const out = { center: geo, zoom: 13, label: "Локация: GPS" };
-    saveCenter({ lat: geo.lat, lng: geo.lng, zoom: out.zoom, label: out.label, ts: Date.now() });
-    return out;
-  }
-
-  // 2) IP (град/област)
-  const ip = await getIpGeo();
-  if(ip){
-    const label = `Локация: ${ip.city || "—"}, ${ip.region || "—"}`;
-    const out = { center: {lat: ip.lat, lng: ip.lng}, zoom: 12, label };
-    saveCenter({ lat: ip.lat, lng: ip.lng, zoom: out.zoom, label: out.label, ts: Date.now() });
-    return out;
-  }
-
-  // 3) default
-  return { center: SLIVEN_CENTER, zoom: 12, label: "Локация: default (Сливен)" };
-}
-
-
-
-
-
-
-
-
-
-
-/* =========================
-   INIT MAP (async)
-========================= */
-async function initMap(){
-  loadActiveMeta();
-  setPanelTitle();
-
-  map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 12,
-    center: SLIVEN_CENTER,
-    mapTypeControl: true,
-    mapTypeControlOptions: {
-      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-      position: google.maps.ControlPosition.TOP_RIGHT
-    }
-  });
-
-  info = new google.maps.InfoWindow();
-
-  // ✅ Центриране по град/област (GPS -> IP -> default)
-  const loc = await resolveStartCenter();
-  map.setCenter(loc.center);
-  map.setZoom(loc.zoom);
-  showUserPin(loc.center);
-  setStatus(loc.label);
-
-  // preload code from ?biz= OR last active
-  const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
-  if(urlBiz) bizCodeEl.value = urlBiz;
-  else {
-    const lastActive = safeJson(localStorage.getItem("sf_cs_business_active"));
-    if(lastActive?.code) bizCodeEl.value = normalizeCode(lastActive.code);
-  }
-
-  wireRightPanel();
-
-  loadAndRender(true);
-  setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
-
-  btnReload.addEventListener("click", () => loadAndRender(false));
-  btnShowAll.addEventListener("click", () => {
-    viewMode = (viewMode === "active") ? "all" : "active";
-    loadActiveMeta();
-    setPanelTitle();
-    applyView(lastData);
-  });
-
-  bizCheckBtn.addEventListener("click", () => activateByCode());
-  bizCodeEl.addEventListener("keydown", (e) => { if(e.key === "Enter") activateByCode(); });
-
-  // ако в друг таб стане нов activation -> refresh активните
-  window.addEventListener("storage", (e) => {
-    if(e.key === ACTIVE_KEY){
-      loadActiveMeta();
-      if(viewMode === "active") applyView(lastData);
-    }
-  });
-}
-window.initMap = initMap;
-</script>
-
-<!-- ✅ И МНОГО ВАЖНО: смени твоя Google Maps script така (без places, без async) -->
-<script defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&callback=initMap&loading=async">
-</script>
-
-
-    // ====== TXT LOADING ======
-    async function fetchTxt(url){
-      const res = await fetch(url, { cache: "no-store" });
-      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери дали е в /public/QR_serveses/.");
-      return await res.text();
-    }
-
-    function parseTxt(txt){
-      const lines = String(txt || "")
-        .split(/\r?\n/)
-        .map(l => l.trim())
-        .filter(l => l && !l.startsWith("#"));
-
-      const out = [];
-      for(const line of lines){
-        const parts = line.split("|").map(p => p.trim());
-        if(parts.length < 5) continue;
-
-        const code = normalizeCode(parts[0]);
-        const name = parts[1] || "Автосервиз";
-        const addr = parts[2] || "";
-        const lat = Number(String(parts[3]).replace(",", "."));
-        const lng = Number(String(parts[4]).replace(",", "."));
-        const source = parts.slice(5).join(" | ").trim();
-
-        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, source, raw: line });
-      }
-      return out;
-    }
-
-    // ====== RENDER ======
-    function clearMarkers(){
-      for(const m of markers) m.setMap(null);
-      markers = [];
-      markersByCode.clear();
-    }
-
-    function fitAll(){
-      if(!markers.length){
-        map.setCenter(SLIVEN_CENTER);
-        map.setZoom(12);
-        return;
-      }
-      const bounds = new google.maps.LatLngBounds();
-      markers.forEach(m => bounds.extend(m.getPosition()));
-      map.fitBounds(bounds, 70);
+    function saveLocalLocation(mode, lat, lng, accuracy, source){
+      localStorage.setItem("sf_cs_location", JSON.stringify({
+        mode, lat, lng,
+        accuracy_m: accuracy ?? null,
+        ts: new Date().toISOString(),
+        source: source || "map"
+      }));
     }
 
     function escapeHtml(str){
@@ -715,359 +290,865 @@ window.initMap = initMap;
       }[m]));
     }
 
-    function initialsFrom(text){
-      const s = String(text || "").trim();
-      if(!s) return "SF";
-      const parts = s.replace(/[._-]+/g," ").split(" ").filter(Boolean);
-      const a = (parts[0] || "S")[0];
-      const b = (parts[1] || parts[0] || "F")[0];
-      return (a + b).toUpperCase();
+    function normalizePhoneForTel(phone){
+      const p = String(phone || "").trim();
+      if(!p) return "";
+      return p.replace(/[^0-9+]/g, "");
     }
 
-    // ✅ PopUp без код
-    function markerHtml(row){
-      const mapsLink = `https://www.google.com/maps/search/?api=1&query=${row.lat},${row.lng}`;
-      const meta = activeMetaByCode.get(normalizeCode(row.code||""));
-      const activatedBy = meta?.email ? `${meta.email}${meta.displayName ? " • " + meta.displayName : ""}` : "—";
+    // ====== Firebase: import shared auth/db ======
+    // ВАЖНО: увери се, че файлът е точно: public/googlelogin/firebase.js (case-sensitive)
+    import { auth, db, firebaseEnabled } from "./googlelogin/firebase.js";
+
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    import {
+      doc, getDoc, setDoc, serverTimestamp,
+      collection, query, where, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    // ====== Firestore helpers ======
+    async function upsertUserProfile(user){
+      if(!firebaseEnabled || !db || !user) return;
+      await setDoc(doc(db, "users", user.uid), {
+        profile: {
+          uid: user.uid,
+          email: user.email || null,
+          displayName: user.displayName || null,
+          photoURL: user.photoURL || null,
+          providerId: (user.providerData?.[0]?.providerId) || "google",
+          lastLoginAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        },
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    function throttle(fn, waitMs){
+      let last = 0;
+      let timer = null;
+      let lastArgs = null;
+      return (...args) => {
+        const now = Date.now();
+        lastArgs = args;
+        if(now - last >= waitMs){
+          last = now;
+          fn(...args);
+        }else{
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            last = Date.now();
+            fn(...lastArgs);
+          }, waitMs - (now - last));
+        }
+      };
+    }
+
+    const writeLastLocationThrottled = throttle(async (uid, loc) => {
+      if(!firebaseEnabled || !db || !uid || !loc) return;
+      try{
+        await setDoc(doc(db, "users", uid), {
+          lastLocation: loc,
+          lastLocationAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }catch(e){ console.warn(e); }
+    }, 5000);
+
+    async function readLastLocationFromFirestore(uid){
+      if(!firebaseEnabled || !db || !uid) return null;
+      try{
+        const snap = await getDoc(doc(db, "users", uid));
+        if(!snap.exists()) return null;
+        const data = snap.data();
+        const loc = data?.lastLocation || null;
+        if(loc && typeof loc.lat === "number" && typeof loc.lng === "number") return loc;
+        return null;
+      }catch(e){
+        console.warn(e);
+        return null;
+      }
+    }
+
+    function showUser(user){
+      userStrip.style.display = "flex";
+      uImg.src = user.photoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='18' fill='%23ffffff'/%3E%3Cpath d='M40 41c9 0 16-7 16-16S49 9 40 9 24 16 24 25s7 16 16 16zm0 6c-13 0-24 7-24 16v4h48v-4c0-9-11-16-24-16z' fill='%230b0b0d' fill-opacity='.55'/%3E%3C/svg%3E";
+      uName.textContent = user.displayName || "User";
+      uMail.textContent = user.email || "";
+    }
+
+    // ====== MAP ======
+    let map, info, pinMarker;
+
+    // Google Places markers
+    let placeMarkers = [];
+
+    // TXT markers
+    let markersByCode = new Map();
+    let txtMarkers = [];
+
+    // Active services markers (Firestore)
+    let activeMarkers = [];
+    let activeById = new Map();
+    let activeRows = [];
+    let activeUnsub = null;
+
+    let lastSearchedCenter = null;
+    let lastMode = "places"; // "places" | "txt"
+    let currentUid = null;
+
+    function approxKm(lat1,lng1,lat2,lng2){
+      const kx = 111.32;
+      const ky = 111.32 * Math.cos((lat1*Math.PI)/180);
+      const dx = (lat2-lat1) * kx;
+      const dy = (lng2-lng1) * ky;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    function clearPlaceMarkers(){
+      placeMarkers.forEach(m => m.setMap(null));
+      placeMarkers = [];
+    }
+
+    function clearTxtMarkers(){
+      txtMarkers.forEach(m => m.setMap(null));
+      txtMarkers = [];
+      markersByCode.clear();
+    }
+
+    function clearActiveMarkers(){
+      activeMarkers.forEach(m => m.setMap(null));
+      activeMarkers = [];
+      activeById.clear();
+    }
+
+    function fitMarkers(list){
+      if(!list.length){
+        map.setCenter(pinMarker ? pinMarker.getPosition() : SLIVEN_CENTER);
+        map.setZoom(13);
+        return;
+      }
+      const bounds = new google.maps.LatLngBounds();
+      if(pinMarker) bounds.extend(pinMarker.getPosition());
+      list.forEach(m => bounds.extend(m.getPosition()));
+      map.fitBounds(bounds, 70);
+    }
+
+    // ====== Active helpers ======
+    function getLocalActiveRowsFallback(){
+      const arr = safeJson(localStorage.getItem(ACTIVE_KEY_LOCAL)) || [];
+      const out = [];
+      arr.forEach((a, idx) => {
+        const code = String(a?.code || "").trim();
+        const lat = Number(a?.lat);
+        const lng = Number(a?.lng);
+        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        out.push({
+          _id: "LOCAL_" + code.toUpperCase(),
+          _ts: Date.now() - (idx * 1000),
+          code: code.toUpperCase(),
+          name: a?.name || "Автосервиз",
+          addr: a?.addr || "",
+          lat, lng,
+          phone: a?.phone || "",
+          googleMapsUri: a?.googleMapsUri || "",
+          ownerEmail: a?.email || ""
+        });
+      });
+      return out;
+    }
+
+    function activeInfoHTML(r){
+      const mapsLink = r.googleMapsUri
+        ? r.googleMapsUri
+        : `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`;
+      const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`;
+      const tel = normalizePhoneForTel(r.phone);
 
       return `
         <div style="font-family:Arial;max-width:290px">
-          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(row.name)}</div>
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(r.name)}</div>
           <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
-            ${row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br/>` : ""}
-            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}<br/>
-            <b>Активирал:</b> ${escapeHtml(activatedBy)}
+            ${r.addr ? `<b>Адрес:</b> ${escapeHtml(r.addr)}<br/>` : ""}
+            <b>GPS:</b> ${Number(r.lat).toFixed(6)}, ${Number(r.lng).toFixed(6)}<br/>
+            ${r.phone ? `<b>Тел:</b> ${escapeHtml(r.phone)}<br/>` : ""}
+            ${r.ownerEmail ? `<b>Активирал:</b> ${escapeHtml(r.ownerEmail)}<br/>` : ""}
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-            <a href="${mapsLink}" target="_blank" rel="noopener"
-              style="font-weight:900;text-decoration:none;color:#0b62ff">Отвори в Google</a>
+            <a class="link" href="${mapsLink}" target="_blank" rel="noopener">Google</a>
+            <a class="link" href="${dirLink}" target="_blank" rel="noopener">Навигация</a>
+            ${tel ? `<a class="link" href="tel:${tel}">Обади се</a>` : ""}
           </div>
         </div>
       `;
     }
 
-    // ✅ LIST: без код; вляво аватар; отдясно име на бизнеса; под него gmail
-    function renderList(rows, activeMode){
-      resultsEl.innerHTML = "";
-      countPill.textContent = String(rows.length);
-
+    function renderActivePanel(rows, modeLabel){
       if(!rows.length){
-        resultsEl.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.75">
-          ${activeMode ? "Няма активирани сервизи още. Активирай от Business Access (Google + код)." : "Няма резултати."}
-        </div>`;
+        sfActiveWrap.style.display = "none";
+        sfActiveWrap.innerHTML = "";
         return;
       }
 
+      sfActiveWrap.style.display = "block";
+      sfActiveWrap.innerHTML = "";
+
+      const head = document.createElement("div");
+      head.className = "sfHeader";
+      head.innerHTML = `
+        <div>SOULFLAME • Активни сервизи сега</div>
+        <div class="sfTag">
+          ${modeLabel ? `<span class="sfMini">${escapeHtml(modeLabel)}</span>` : ""}
+          <span>${rows.length}</span>
+        </div>
+      `;
+      sfActiveWrap.appendChild(head);
+
       rows.forEach((r) => {
-        const codeKey = normalizeCode(r.code||"");
-        const meta = activeMetaByCode.get(codeKey);
-
-        const photo = meta?.photoURL || "";
-        const email = meta?.email || "";
-        const displayName = meta?.displayName || "";
-
-        const badgeHtml = photo
-          ? `<img src="${escapeHtml(photo)}" alt="Google" referrerpolicy="no-referrer" />`
-          : `<div class="fallback">${escapeHtml(initialsFrom(displayName || email || r.name || "SF"))}</div>`;
-
-        const emailLine = email
-          ? `<div class="row2"><span class="mail">• ${escapeHtml(email)}${displayName ? " • " + escapeHtml(displayName) : ""}</span></div>`
-          : `<div class="row2"><span class="mail">• ${activeMode ? "(няма Google профил)" : "(неактивен)"}</span></div>`;
+        const tel = normalizePhoneForTel(r.phone);
 
         const el = document.createElement("div");
-        el.className = "item";
+        el.className = "item sfActive";
         el.innerHTML = `
-          <div class="badge">${badgeHtml}</div>
+          <div class="badge sf">SF</div>
           <div class="meta">
             <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
             <div class="addr">
               ${r.addr ? escapeHtml(r.addr) + " • " : ""}
-              ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}
+              ${Number(r.lat).toFixed(6)}, ${Number(r.lng).toFixed(6)}
             </div>
-            ${emailLine}
+            <div class="row2">
+              <span class="sfMini">ONLINE ✅</span>
+              ${r.ownerEmail ? `<span class="sfMini">${escapeHtml(r.ownerEmail)}</span>` : ""}
+              ${tel ? `<a class="link" href="tel:${tel}" onclick="event.stopPropagation()">Обади се</a>` : ""}
+              <a class="link" href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Навигация</a>
+            </div>
           </div>
         `;
-        el.addEventListener("click", () => focusRow(r.code, true));
-        resultsEl.appendChild(el);
+        el.addEventListener("click", () => {
+          const hit = activeById.get(r._id);
+          if(!hit) return;
+          map.panTo(hit.marker.getPosition());
+          map.setZoom(16);
+          google.maps.event.trigger(hit.marker, "click");
+        });
+        sfActiveWrap.appendChild(el);
       });
     }
 
-    function renderPins(rows, activeMode){
-      clearMarkers();
+    function renderActiveMarkers(rows){
+      clearActiveMarkers();
 
-      rows.forEach((r, idx) => {
-        // маркерите си остават с номерация (1..N)
-        const labelText = activeMode ? String(idx + 1) : "•";
+      rows.forEach((r) => {
+        const mk = new google.maps.Marker({
+          position: { lat: Number(r.lat), lng: Number(r.lng) },
+          map,
+          title: r.name,
+          label: { text: "SF" }
+        });
 
+        mk.addListener("click", () => {
+          info.setContent(activeInfoHTML(r));
+          info.open({ map, anchor: mk });
+        });
+
+        activeMarkers.push(mk);
+        activeById.set(r._id, { row: r, marker: mk });
+      });
+    }
+
+    function subscribeActiveServicesRealtime(){
+      // Ако Firebase е off → само локален fallback (ако има)
+      if(!firebaseEnabled || !db){
+        const localRows = getLocalActiveRowsFallback();
+        activeRows = localRows;
+        renderActivePanel(activeRows, localRows.length ? "LOCAL" : "");
+        renderActiveMarkers(activeRows);
+        return;
+      }
+
+      if(activeUnsub) { try{ activeUnsub(); }catch(e){} activeUnsub = null; }
+
+      // ✅ Firestore: businesses where isActive == true
+      const q = query(collection(db, "businesses"), where("isActive", "==", true));
+
+      activeUnsub = onSnapshot(q, (snap) => {
+        const rows = [];
+        snap.forEach((ds) => {
+          const d = ds.data() || {};
+          const lat = Number(d.lat ?? d.location?.lat ?? d.gps?.lat);
+          const lng = Number(d.lng ?? d.location?.lng ?? d.gps?.lng);
+          if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          const ts =
+            (d.activatedAt?.toMillis ? d.activatedAt.toMillis() : 0) ||
+            (d.updatedAt?.toMillis ? d.updatedAt.toMillis() : 0) || 0;
+
+          rows.push({
+            _id: ds.id,
+            _ts: ts,
+            code: d.code || "",
+            name: d.name || "Автосервиз",
+            addr: d.addr || "",
+            lat, lng,
+            phone: d.phone || "",
+            googleMapsUri: d.googleMapsUri || "",
+            ownerEmail: d.ownerEmail || d.activatedByEmail || ""
+          });
+        });
+
+        rows.sort((a,b) => (b._ts || 0) - (a._ts || 0));
+
+        const localRows = getLocalActiveRowsFallback();
+        activeRows = rows.length ? rows : localRows;
+
+        renderActivePanel(activeRows, rows.length ? "LIVE" : (localRows.length ? "LOCAL" : ""));
+        renderActiveMarkers(activeRows);
+
+      }, (err) => {
+        console.warn(err);
+        const localRows = getLocalActiveRowsFallback();
+        activeRows = localRows;
+        renderActivePanel(activeRows, localRows.length ? "LOCAL" : "");
+        renderActiveMarkers(activeRows);
+      });
+    }
+
+    // ====== Реалният старт на картата (вика се от placeholder initMap) ======
+    window.__sf_startMap = async function __sf_startMap(){
+      // защита срещу двойно стартиране
+      if (window.__sf_started) return;
+      window.__sf_started = true;
+
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: SLIVEN_CENTER,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+          position: google.maps.ControlPosition.TOP_RIGHT
+        }
+      });
+
+      info = new google.maps.InfoWindow();
+
+      map.addListener("click", (e) => {
+        setPinAndSearch(e.latLng.lat(), e.latLng.lng(), true);
+      });
+
+      map.addListener("idle", () => {
+        if(!lastSearchedCenter) return;
+        const c = map.getCenter();
+        const distKm = approxKm(lastSearchedCenter.lat(), lastSearchedCenter.lng(), c.lat(), c.lng());
+        if(distKm > 0.25) searchAreaBtn.classList.add("show");
+      });
+
+      searchAreaBtn.addEventListener("click", () => {
+        const c = map.getCenter();
+        setPinAndSearch(c.lat(), c.lng(), true);
+        searchAreaBtn.classList.remove("show");
+      });
+
+      btnRefresh.addEventListener("click", () => {
+        const p = pinMarker ? pinMarker.getPosition() : map.getCenter();
+        setPinAndSearch(p.lat(), p.lng(), true);
+      });
+
+      btnNearMe.addEventListener("click", () => locateAndSearch(true));
+
+      btnUseTxt.addEventListener("click", () => {
+        lastMode = "txt";
+        loadTxtAndRender(true);
+      });
+
+      // Auto refresh TXT ако сме в TXT режим
+      setInterval(() => {
+        if(lastMode === "txt") loadTxtAndRender(false);
+      }, AUTO_REFRESH_MS);
+
+      await bootstrapStart();
+    };
+
+    // ако callback вече е бил викнат преди модула да се зареди:
+    if (window.__sf_map_callback_called && typeof window.__sf_startMap === "function") {
+      window.__sf_startMap();
+    }
+
+    async function bootstrapStart(){
+      setStatus("Проверявам вход…");
+
+      if(!firebaseEnabled || !auth){
+        setStatus("⚠️ Firebase OFF. Картата работи, но няма LIVE Active/логин.");
+        subscribeActiveServicesRealtime();
+
+        const loc = getSavedLocation();
+        if(loc?.lat && loc?.lng){
+          setStatus("Ползвам локацията от localStorage…");
+          setPinAndSearch(loc.lat, loc.lng, true);
+        }else{
+          setStatus("Няма локация. Ползвам Сливен.");
+          setPinAndSearch(SLIVEN_CENTER.lat, SLIVEN_CENTER.lng, true);
+        }
+        return;
+      }
+
+      onAuthStateChanged(auth, async (user) => {
+        if(!user){
+          setStatus("❌ Няма login. Връщам към access_location_user.html…");
+          window.location.href = "./access_location_user.html";
+          return;
+        }
+
+        currentUid = user.uid;
+        showUser(user);
+        try{ await upsertUserProfile(user); }catch(e){ console.warn(e); }
+
+        subscribeActiveServicesRealtime();
+
+        const localLoc = getSavedLocation();
+        if(localLoc && typeof localLoc.lat === "number" && typeof localLoc.lng === "number"){
+          setStatus("Ползвам локацията от Access screen (localStorage)…");
+          setPinAndSearch(localLoc.lat, localLoc.lng, true);
+          return;
+        }
+
+        const fsLoc = await readLastLocationFromFirestore(user.uid);
+        if(fsLoc && typeof fsLoc.lat === "number" && typeof fsLoc.lng === "number"){
+          setStatus("Ползвам локацията от Firestore…");
+          saveLocalLocation("user", fsLoc.lat, fsLoc.lng, fsLoc.accuracy_m ?? null, fsLoc.source || "firestore");
+          setPinAndSearch(fsLoc.lat, fsLoc.lng, true);
+          return;
+        }
+
+        locateAndSearch(true);
+      });
+
+      btnLogout.addEventListener("click", async () => {
+        try{
+          if(activeUnsub){ try{ activeUnsub(); }catch(e){} activeUnsub = null; }
+          clearActiveMarkers();
+          renderActivePanel([]);
+
+          await signOut(auth);
+          setStatus("Изход…");
+          window.location.href = "./access_location_user.html";
+        }catch(e){
+          setStatus("❌ Грешка при изход.");
+        }
+      });
+    }
+
+    function locateAndSearch(doSearch){
+      if(!navigator.geolocation){
+        setStatus("Браузърът няма геолокация.");
+        setPinAndSearch(SLIVEN_CENTER.lat, SLIVEN_CENTER.lng, doSearch);
+        return;
+      }
+      setStatus("Искам локация…");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          saveLocalLocation("user", lat, lng, pos.coords.accuracy, "geolocation");
+          if(currentUid){
+            writeLastLocationThrottled(currentUid, {
+              mode: "user",
+              lat, lng,
+              accuracy_m: pos.coords.accuracy ?? null,
+              ts: new Date().toISOString(),
+              source: "geolocation"
+            });
+          }
+
+          setPinAndSearch(lat, lng, doSearch);
+        },
+        () => {
+          setStatus("Няма достъп до локация (ползвам Сливен).");
+          saveLocalLocation("user", SLIVEN_CENTER.lat, SLIVEN_CENTER.lng, null, "fallback_sliven");
+          if(currentUid){
+            writeLastLocationThrottled(currentUid, {
+              mode: "user",
+              lat: SLIVEN_CENTER.lat,
+              lng: SLIVEN_CENTER.lng,
+              accuracy_m: null,
+              ts: new Date().toISOString(),
+              source: "fallback_sliven"
+            });
+          }
+          setPinAndSearch(SLIVEN_CENTER.lat, SLIVEN_CENTER.lng, doSearch);
+        },
+        { enableHighAccuracy:true, timeout:12000, maximumAge:5000 }
+      );
+    }
+
+    function setPinAndSearch(lat, lng, doSearch){
+      const pos = { lat, lng };
+
+      if(!pinMarker){
+        pinMarker = new google.maps.Marker({
+          position: pos,
+          map,
+          draggable: true,
+          title: "Търсене от тук"
+        });
+        pinMarker.addListener("dragend", () => {
+          const p = pinMarker.getPosition();
+          setPinAndSearch(p.lat(), p.lng(), true);
+        });
+      } else {
+        pinMarker.setPosition(pos);
+      }
+
+      map.setCenter(pos);
+      map.setZoom(14);
+
+      saveLocalLocation("user", lat, lng, null, "pin");
+      if(currentUid){
+        writeLastLocationThrottled(currentUid, {
+          mode: "user",
+          lat, lng,
+          accuracy_m: null,
+          ts: new Date().toISOString(),
+          source: "pin"
+        });
+      }
+
+      if(doSearch){
+        lastMode = "places";
+        searchAutoServices(lat, lng);
+      }
+    }
+
+    // ====== PLACES API (Nearby car_repair) ======
+    async function searchAutoServices(lat, lng){
+      panelTitle.textContent = "Автосервизи около теб (Google)";
+      setStatus("Търся автосервизи…");
+      resultsEl.innerHTML = "";
+      countPill.textContent = "…";
+
+      clearPlaceMarkers();
+      clearTxtMarkers();
+
+      lastSearchedCenter = new google.maps.LatLng(lat, lng);
+
+      try{
+        const url = "https://places.googleapis.com/v1/places:searchNearby";
+
+        const body = {
+          includedTypes: ["car_repair"],
+          maxResultCount: MAX_RESULTS,
+          rankPreference: "DISTANCE",
+          languageCode: "bg",
+          regionCode: "BG",
+          locationRestriction: {
+            circle: {
+              center: { latitude: lat, longitude: lng },
+              radius: RADIUS_METERS
+            }
+          }
+        };
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": API_KEY,
+            "X-Goog-FieldMask": [
+              "places.id",
+              "places.displayName",
+              "places.formattedAddress",
+              "places.location",
+              "places.rating",
+              "places.userRatingCount",
+              "places.googleMapsUri",
+              "places.websiteUri",
+              "places.internationalPhoneNumber",
+              "places.currentOpeningHours"
+            ].join(",")
+          },
+          body: JSON.stringify(body)
+        });
+
+        if(!res.ok){
+          const txt = await res.text();
+          throw new Error("HTTP "+res.status+" — "+txt.slice(0,600));
+        }
+
+        const data = await res.json();
+        const places = data.places || [];
+
+        countPill.textContent = String(places.length);
+        setStatus(places.length ? `Намерени: ${places.length}` : "Няма намерени сервизи наблизо.");
+        drawPlaces(places);
+
+        lastMode = "places";
+
+      }catch(err){
+        console.error(err);
+        countPill.textContent = "0";
+
+        const msg = String(err && err.message ? err.message : err);
+        if(msg.includes("403") || msg.includes("PERMISSION_DENIED")){
+          setStatus("403: Places API OFF / Billing OFF / key restrictions. Пускам TXT fallback…");
+        }else{
+          setStatus("Грешка Places API. Пускам TXT fallback…");
+        }
+
+        lastMode = "txt";
+        loadTxtAndRender(true);
+      }
+    }
+
+    function drawPlaces(places){
+      resultsEl.innerHTML = "";
+      clearPlaceMarkers();
+
+      const bounds = new google.maps.LatLngBounds();
+      if(pinMarker) bounds.extend(pinMarker.getPosition());
+
+      places.forEach((p, i) => {
+        const name = p.displayName?.text || "Автосервиз";
+        const addr = p.formattedAddress || "";
+        const rating = (p.rating != null) ? p.rating.toFixed(1) : null;
+        const count = p.userRatingCount || 0;
+
+        const lat = p.location?.latitude;
+        const lng = p.location?.longitude;
+        if(lat == null || lng == null) return;
+
+        const phone = p.internationalPhoneNumber || "";
+        const tel = normalizePhoneForTel(phone);
+
+        const mk = new google.maps.Marker({
+          position: { lat, lng },
+          map,
+          title: name,
+          label: { text: String(i+1) }
+        });
+
+        mk.addListener("click", () => {
+          info.setContent(placeInfoHTML(p));
+          info.open({ map, anchor: mk });
+        });
+
+        placeMarkers.push(mk);
+        bounds.extend({ lat, lng });
+
+        const mapsLink = p.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${encodeURIComponent(p.id||"")}`;
+        const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}${p.id ? `&destination_place_id=${encodeURIComponent(p.id)}` : ""}`;
+
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="badge">${i+1}</div>
+          <div class="meta">
+            <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+            <div class="addr">${escapeHtml(addr)}</div>
+            <div class="row2">
+              ${rating ? `<span>⭐ ${rating} (${count})</span>` : `<span>Без рейтинг</span>`}
+              <a class="link" href="${mapsLink}" target="_blank" rel="noopener">Google</a>
+              <a class="link" href="${dirLink}" target="_blank" rel="noopener">Навигация</a>
+              ${tel ? `<a class="link" href="tel:${tel}" onclick="event.stopPropagation()">Обади се</a>` : ""}
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          map.panTo({ lat, lng });
+          map.setZoom(15);
+          google.maps.event.trigger(mk, "click");
+        });
+
+        resultsEl.appendChild(el);
+      });
+
+      if(!bounds.isEmpty()) map.fitBounds(bounds, 70);
+    }
+
+    function placeInfoHTML(p){
+      const name = p.displayName?.text || "Автосервиз";
+      const addr = p.formattedAddress || "";
+      const phone = p.internationalPhoneNumber || "";
+      const tel = normalizePhoneForTel(phone);
+      const website = p.websiteUri || "";
+      const maps = p.googleMapsUri || "";
+      const openNow = (p.currentOpeningHours && typeof p.currentOpeningHours.openNow === "boolean")
+        ? (p.currentOpeningHours.openNow ? "Отворено" : "Затворено")
+        : "";
+
+      return `
+        <div style="font-family:Arial;max-width:280px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(name)}</div>
+          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">${escapeHtml(addr)}</div>
+          ${openNow ? `<div style="font-size:12px;font-weight:900;margin-bottom:8px">${openNow}</div>` : ""}
+          ${phone ? `<div style="font-size:12px;margin-bottom:6px">📞 ${escapeHtml(phone)}</div>` : ""}
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            ${maps ? `<a href="${maps}" target="_blank" rel="noopener" style="font-weight:900;text-decoration:none;color:#0b62ff">Отвори в Google</a>` : ""}
+            ${tel ? `<a href="tel:${tel}" style="font-weight:900;text-decoration:none;color:#0b62ff">Обади се</a>` : ""}
+            ${website ? `<a href="${website}" target="_blank" rel="noopener" style="font-weight:900;text-decoration:none;color:#0b62ff">Сайт</a>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    // ====== TXT LOADING (fallback) ======
+    async function fetchTxt(url){
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok) throw new Error(`Не мога да заредя TXT (${res.status}). Провери пътя и че е в public.`);
+      return await res.text();
+    }
+
+    // Твоят TXT е "|" отделен и има header ред → парсера го игнорира.
+    function parseTxt(txt){
+      const lines = String(txt || "")
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith("#"));
+
+      const out = [];
+      for(const line of lines){
+        const parts = line.split("|").map(p => p.trim()).filter(Boolean);
+        if(parts.length < 4) continue;
+
+        const nums = parts.map(p => Number(String(p).replace(",", ".")));
+        let latIdx = -1, lngIdx = -1;
+
+        for(let i=0;i<parts.length;i++){
+          const n = nums[i];
+          if(Number.isFinite(n) && Math.abs(n) <= 90) {
+            if(i+1 < parts.length){
+              const n2 = nums[i+1];
+              if(Number.isFinite(n2) && Math.abs(n2) <= 180){
+                latIdx = i; lngIdx = i+1; break;
+              }
+            }
+          }
+        }
+        if(latIdx === -1) continue;
+
+        const code = parts[0];
+        const name = parts[1] || "Автосервиз";
+        const addr = (latIdx >= 3) ? parts[2] : "";
+        const lat = Number(String(parts[latIdx]).replace(",", "."));
+        const lng = Number(String(parts[lngIdx]).replace(",", "."));
+        const source = parts.slice(lngIdx+1).join(" | ");
+
+        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        out.push({ code, name, addr, lat, lng, source, raw: line });
+      }
+      return out;
+    }
+
+    function markerHtmlTxt(row){
+      const mapsLink = `https://www.google.com/maps/search/?api=1&query=${row.lat},${row.lng}`;
+      return `
+        <div style="font-family:Arial;max-width:280px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(row.name)}</div>
+          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
+            ${row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br/>` : ""}
+            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            <a href="${mapsLink}" target="_blank" rel="noopener"
+              style="font-weight:900;text-decoration:none;color:#0b62ff">Отвори в Google</a>
+          </div>
+          ${row.source ? `<div style="margin-top:8px;font-size:11px;opacity:.7">${escapeHtml(row.source)}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderTxt(rows){
+      panelTitle.textContent = "Сливен — сервизи от TXT (fallback)";
+      resultsEl.innerHTML = "";
+      countPill.textContent = String(rows.length);
+
+      clearTxtMarkers();
+      clearPlaceMarkers();
+
+      rows.forEach((r) => {
         const mk = new google.maps.Marker({
           position: { lat: r.lat, lng: r.lng },
           map,
           title: r.name,
           label: {
-            text: String(labelText),
+            text: r.name,
             fontSize: "11px",
-            fontWeight: "800",
+            fontWeight: "700",
             color: "#111",
             className: "marker-label"
           }
         });
 
         mk.addListener("click", () => {
-          info.setContent(markerHtml(r));
+          info.setContent(markerHtmlTxt(r));
           info.open({ map, anchor: mk });
-          openRightPanel(r);
         });
 
-        markers.push(mk);
-        markersByCode.set(normalizeCode(r.code||""), { row: r, marker: mk });
+        txtMarkers.push(mk);
+        markersByCode.set(r.code.toUpperCase(), { row: r, marker: mk });
+
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="badge">${escapeHtml(r.code)}</div>
+          <div class="meta">
+            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
+            <div class="addr">
+              ${r.addr ? escapeHtml(r.addr) + " • " : ""}
+              ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}
+            </div>
+            <div class="row2">
+              <span style="font-weight:900;opacity:.8">GPS</span>
+              <a class="link" target="_blank" rel="noopener"
+                href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}">Google</a>
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          map.panTo({ lat: r.lat, lng: r.lng });
+          map.setZoom(15);
+          google.maps.event.trigger(mk, "click");
+        });
+
+        resultsEl.appendChild(el);
       });
+
+      fitMarkers(txtMarkers);
+      setStatus(`TXT OK: ${rows.length} сервиза. Следващ refresh: ${Math.round(AUTO_REFRESH_MS/60000)} мин.`);
+      lastMode = "txt";
     }
 
-    function focusRow(code, openPanel){
-      const key = normalizeCode(code||"");
-      const hit = markersByCode.get(key);
-      if(!hit){
-        setStatus("Няма такъв запис в текущия изглед.");
-        return;
-      }
-      const { row, marker } = hit;
-      map.panTo({ lat: row.lat, lng: row.lng });
-      map.setZoom(16);
-      google.maps.event.trigger(marker, "click");
-      setStatus("OK: " + row.name);
-      if(openPanel) openRightPanel(row);
-    }
-
-    function applyView(allRows){
-      lastData = allRows;
-
-      if(viewMode === "active"){
-        const actRows = buildActiveRows(allRows);
-        renderPins(actRows, true);
-        renderList(actRows, true);
-
-        if(!actRows.length){
-          setStatus("Няма активирани сервизи (още).");
-          map.setCenter(SLIVEN_CENTER);
-          map.setZoom(12);
-          return;
-        }
-
-        setStatus(`OK: ${actRows.length} активни сервиза.`);
-        fitAll();
-      } else {
-        renderPins(allRows, false);
-        renderList(allRows, false);
-        setStatus(`OK: ${allRows.length} сервиза от TXT.`);
-        fitAll();
-      }
-
-      // auto focus ако има ?biz=
-      const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
-      if(urlBiz){
-        const hit = markersByCode.get(urlBiz);
-        if(hit) focusRow(urlBiz, true);
-      }
-    }
-
-    async function loadAndRender(first){
+    async function loadTxtAndRender(first){
       try{
-        setStatus(first ? "Зареждам TXT…" : "Обновявам…");
+        setStatus(first ? "Зареждам TXT…" : "Обновявам от TXT…");
         const txt = await fetchTxt(DATA_URL);
         const rows = parseTxt(txt);
 
-        loadActiveMeta();
-        applyView(rows);
+        if(!rows.length){
+          setStatus("TXT е празен или форматът не се разпознава.");
+          renderTxt([]);
+          return;
+        }
+        renderTxt(rows);
 
       }catch(err){
         console.error(err);
-        setStatus("Грешка: " + (err?.message || err));
+        setStatus("Грешка TXT: " + (err?.message || err));
+        countPill.textContent = "0";
+        resultsEl.innerHTML = `
+          <div style="padding:10px;color:#b91c1c;font-weight:900">
+            Не мога да заредя TXT. Провери: public/QR_serveses/sliven_avtoservizi.txt
+          </div>
+        `;
       }
-    }
-
-    function activateByCode(){
-      const code = normalizeCode(bizCodeEl.value || "");
-      bizCodeEl.value = code;
-      if(!code){ alert("Въведи код (пример: SF-SLV-004)"); return; }
-
-      if(viewMode === "active" && !activeMetaByCode.has(code)){
-        setStatus("Този код не е активиран. Превключвам към всички…");
-        viewMode = "all";
-        setPanelTitle();
-        applyView(lastData);
-      }
-      focusRow(code, true);
-    }
-
-    // ===== Right Panel Logic (без показване на кода) =====
-    const rp = document.getElementById("rightPanel");
-    const rpClose = document.getElementById("rpClose");
-    const rpTitle = document.getElementById("rpTitle");
-    const rpSub = document.getElementById("rpSub");
-    const baseInfo = document.getElementById("baseInfo");
-    const btnOpenGoogle = document.getElementById("btnOpenGoogle");
-    const btnCenter = document.getElementById("btnCenter");
-    const btnGoAccess = document.getElementById("btnGoAccess");
-
-    const pPhone = document.getElementById("pPhone");
-    const pHours = document.getElementById("pHours");
-    const pServices = document.getElementById("pServices");
-    const pDesc = document.getElementById("pDesc");
-    const btnSaveProfile = document.getElementById("btnSaveProfile");
-    const btnResetProfile = document.getElementById("btnResetProfile");
-
-    const chatText = document.getElementById("chatText");
-    const btnSendChat = document.getElementById("btnSendChat");
-    const btnClearChat = document.getElementById("btnClearChat");
-    const chatList = document.getElementById("chatList");
-
-    let currentRow = null;
-
-    function wireRightPanel(){
-      rpClose.addEventListener("click", () => rp.classList.remove("show"));
-      btnCenter.addEventListener("click", () => {
-        if(!currentRow) return;
-        map.panTo({lat: currentRow.lat, lng: currentRow.lng});
-        map.setZoom(16);
-      });
-      btnOpenGoogle.addEventListener("click", () => {
-        if(!currentRow) return;
-        const url = `https://www.google.com/maps/search/?api=1&query=${currentRow.lat},${currentRow.lng}`;
-        window.open(url, "_blank", "noopener");
-      });
-
-      btnGoAccess.addEventListener("click", () => {
-        // смени файла ако при теб е с друго име
-        window.location.href = "access_location_business.html";
-      });
-
-      btnSaveProfile.addEventListener("click", () => {
-        if(!currentRow) return;
-        saveBizProfile(currentRow.code, {
-          phone: pPhone.value.trim(),
-          hours: pHours.value.trim(),
-          services: pServices.value.trim(),
-          desc: pDesc.value.trim(),
-          updatedAt: new Date().toISOString()
-        });
-        setStatus("Запазено: профил за " + currentRow.name);
-        try{ localStorage.setItem("sf_cs_biz_profile_last", String(Date.now())); }catch(_){}
-      });
-
-      btnResetProfile.addEventListener("click", () => {
-        if(!currentRow) return;
-        deleteBizProfile(currentRow.code);
-        loadProfileIntoUI(currentRow.code);
-        setStatus("Reset: профил за " + currentRow.name);
-      });
-
-      btnSendChat.addEventListener("click", () => {
-        if(!currentRow) return;
-        const t = chatText.value.trim();
-        if(!t) return;
-        pushChat(currentRow.code, { from:"BUSINESS", text:t, ts:new Date().toISOString() });
-        chatText.value = "";
-        renderChat(currentRow.code);
-      });
-
-      btnClearChat.addEventListener("click", () => {
-        if(!currentRow) return;
-        clearChat(currentRow.code);
-        renderChat(currentRow.code);
-      });
-
-      window.addEventListener("storage", (e) => {
-        if(!currentRow) return;
-        if(e.key && (e.key === "sf_cs_biz_profiles" || e.key === "sf_cs_biz_profile_last")){
-          loadProfileIntoUI(currentRow.code);
-        }
-      });
-    }
-
-    function openRightPanel(row){
-      currentRow = row;
-
-      const meta = activeMetaByCode.get(normalizeCode(row.code||""));
-      const activatedBy = meta?.email ? `${meta.email}${meta.displayName ? " • " + meta.displayName : ""}` : "—";
-
-      // ✅ без код
-      rpTitle.textContent = row.name || "—";
-      rpSub.textContent = "Активирал: " + activatedBy;
-
-      baseInfo.innerHTML =
-        `<b>Име:</b> ${escapeHtml(row.name)}<br>` +
-        (row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br>` : "") +
-        `<b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}<br>` +
-        `<b>Активирал:</b> ${escapeHtml(activatedBy)}<br>`;
-
-      loadProfileIntoUI(row.code);
-      renderChat(row.code);
-      rp.classList.add("show");
-
-      try{
-        localStorage.setItem("sf_cs_business_active", JSON.stringify({
-          code: row.code, name: row.name, addr: row.addr || "", lat: row.lat, lng: row.lng,
-          ts: new Date().toISOString()
-        }));
-      }catch(_){}
-    }
-
-    function getProfiles(){ return safeJson(localStorage.getItem("sf_cs_biz_profiles")) || {}; }
-    function saveBizProfile(code, patch){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      all[key] = Object.assign({}, all[key] || {}, patch);
-      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
-    }
-    function deleteBizProfile(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      delete all[key];
-      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
-    }
-    function loadProfileIntoUI(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      const p = all[key] || {};
-      pPhone.value = p.phone || "";
-      pHours.value = p.hours || "";
-      pServices.value = p.services || "";
-      pDesc.value = p.desc || "";
-    }
-
-    function chatKey(code){ return "sf_cs_chat_" + normalizeCode(code); }
-    function getChat(code){ return safeJson(localStorage.getItem(chatKey(code))) || []; }
-    function pushChat(code, msg){
-      const arr = getChat(code);
-      arr.push(msg);
-      localStorage.setItem(chatKey(code), JSON.stringify(arr.slice(-60)));
-    }
-    function clearChat(code){ localStorage.removeItem(chatKey(code)); }
-    function renderChat(code){
-      const arr = getChat(code);
-      chatList.innerHTML = "";
-      if(!arr.length){
-        chatList.innerHTML = `<div style="font-size:12px;opacity:.7">Няма съобщения (локално).</div>`;
-        return;
-      }
-      arr.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "msg";
-        const ts = m.ts ? new Date(m.ts) : new Date();
-        div.innerHTML = `<b>${escapeHtml(m.from || "—")} • ${escapeHtml(ts.toLocaleString())}</b>${escapeHtml(m.text || "")}`;
-        chatList.appendChild(div);
-      });
-      chatList.scrollTop = chatList.scrollHeight;
     }
   </script>
 
-<!-- ✅ Google Maps JS --> 
-
-
-<script async defer
-
- src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&libraries=places&callback=initMap">
-
- </script> 
-</body> 
+  <!-- ✅ Google Maps JS (callback към window.initMap) -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&libraries=places&callback=initMap">
+  </script>
+</body>
 </html>
+
+
