@@ -784,5 +784,32 @@
       document.head.appendChild(s);
     })();
   </script>
+
+
+<script>
+  (function loadGoogleMapsSafely(){
+    // СЛОЖИ ТУК ТВОЯ KEY
+    const KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ";
+
+    // уникален callback, за да няма конфликт и да няма “стар” initMap
+    const cb = "__sfMapsCb_" + Math.random().toString(36).slice(2);
+
+    window[cb] = function(){
+      try { delete window[cb]; } catch(e){}
+      if (typeof window.initMap === "function") window.initMap();
+    };
+
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${KEY}&callback=${cb}&v=${Date.now()}`;
+    s.async = false;            // 🔥 важно: НЕ async
+    s.onerror = () => {
+      const st = document.getElementById("status");
+      if(st) st.textContent = "Грешка: Google Maps не се зареди.";
+      console.error("Google Maps load failed");
+    };
+    document.head.appendChild(s);
+  })();
+</script>
+
 </body>
 </html>
