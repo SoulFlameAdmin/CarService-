@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>SoulFlame CarService — Screen 2 (Ultra Tesla Responsive)</title>
+  <title>SoulFlame CarService — Screen 2</title>
 
   <style>
     :root{
@@ -38,8 +38,9 @@
 
     body{
       margin:0;
-      min-height:100svh; /* mobile safe height */
-      overflow:hidden;
+      min-height:100svh;
+      overflow:auto;                 /* ✅ важно за мобилен */
+      -webkit-overflow-scrolling:touch;
       font-family: Arial, Helvetica, sans-serif;
       color:var(--text);
 
@@ -96,9 +97,7 @@
       gap: clamp(10px, 2.4vw, 18px);
     }
 
-    .top{
-      text-align:center;
-    }
+    .top{ text-align:center; }
 
     .brand{
       margin:0;
@@ -150,6 +149,7 @@
       transform-style: preserve-3d;
       transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
       min-height: clamp(210px, 28vw, 280px);
+      cursor: pointer;
     }
 
     .card::after{
@@ -329,20 +329,17 @@
       box-shadow: 0 34px 95px rgba(0,0,0,.16);
     }
 
-    /* ---- MOBILE: stack + disable heavy tilt on touch ---- */
     @media (max-width: 860px){
       .grid{ grid-template-columns:1fr; }
       .card{ min-height: auto; }
     }
 
-    /* very small phones */
     @media (max-width: 390px){
       .actions{ gap:8px; }
       .primary .icon{ width:32px; height:32px; }
       .pill{ padding:6px 9px; }
     }
 
-    /* iOS notch safe padding */
     .safePad{
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
@@ -363,7 +360,7 @@
 
     <div class="grid">
       <!-- USER -->
-      <div class="card user" data-role="user">
+      <div class="card user" data-role="user" aria-label="User mode">
         <div class="shine"></div>
         <div class="glow"></div>
 
@@ -381,9 +378,9 @@
         </ul>
 
         <div class="actions">
-          <button class="ghost" type="button" onclick="previewUser()">Preview</button>
+          <button class="ghost" type="button" onclick="previewUser(event)">Preview</button>
 
-          <button class="primary" type="button" onclick="goUser()">
+          <button class="primary" type="button" onclick="goUser(event)">
             Enter
             <span class="icon" aria-hidden="true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -395,7 +392,7 @@
       </div>
 
       <!-- BUSINESS -->
-      <div class="card business" data-role="business">
+      <div class="card business" data-role="business" aria-label="Business mode">
         <div class="shine"></div>
         <div class="glow"></div>
 
@@ -413,9 +410,9 @@
         </ul>
 
         <div class="actions">
-          <button class="ghost" type="button" onclick="previewBiz()">Preview</button>
+          <button class="ghost" type="button" onclick="previewBiz(event)">Preview</button>
 
-          <button class="primary" type="button" onclick="goBusiness()">
+          <button class="primary" type="button" onclick="goBusiness(event)">
             Enter
             <span class="icon" aria-hidden="true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -428,36 +425,90 @@
     </div>
 
     <div class="footer">
-      След избора може да отворим вход с Google (Gmail) според режима.
-      Можеш да смениш режима по-късно.
+      След избора може да отворим вход с Google според режима.  
+      Preview е демо без вход — идеално за показване на сервизи.
     </div>
   </div>
 
   <script>
+    // =========================
+    //  SoulFlame Screen 2 (Final)
+    //  - Vercel + Localhost safe
+    //  - Stores state for next pages
+    // =========================
 
-// --------- REAL ROUTES (SoulFlame CarService) ----------
-function goUser(){
-  window.location.href = "access_location_user.html";
-}
+    const ROUTES = {
+      userAccess: "./access_location_user.html",
+      bizAccess: "./access_location_business.html",
+      userMapPreview: "./map_user.html?preview=1"
+    };
 
-function goBusiness(){
-  window.location.href = "access_location_business.html";
-}
+    const KEYS = {
+      mode: "SF_MODE",
+      preview: "SF_PREVIEW",
+      city: "SF_CITY"
+    };
 
-function previewUser(){
-  window.location.href = "map.html"; // preview карта
-}
+    function safeSet(key, value){
+      try { localStorage.setItem(key, value); } catch(e) {}
+    }
 
-function previewBiz(){
-  alert("BUSINESS: Claim сервиз, Google профил и клиенти");
-}
+    function setState(mode, preview){
+      safeSet(KEYS.mode, mode);
+      safeSet(KEYS.preview, preview ? "1" : "0");
+      // default за TXT (можеш да го смениш по-късно от UI)
+      if(!localStorage.getItem(KEYS.city)) safeSet(KEYS.city, "sliven");
+    }
 
+    function nav(url){
+      window.location.href = url;
+    }
+
+    // ---- Public API for buttons ----
+    function goUser(e){
+      if(e) e.stopPropagation();
+      setState("user", false);
+      nav(ROUTES.userAccess);
+    }
+
+    function goBusiness(e){
+      if(e) e.stopPropagation();
+      setState("business", false);
+      nav(ROUTES.bizAccess);
+    }
+
+    function previewUser(e){
+      if(e) e.stopPropagation();
+      setState("user", true);
+      nav(ROUTES.userMapPreview);
+    }
+
+    function previewBiz(e){
+      if(e) e.stopPropagation();
+      setState("business", true);
+      // preview бизнес минава през access (там ще направим claim demo)
+      nav(ROUTES.bizAccess + "?preview=1");
+    }
+
+    // expose globally (inline onclick uses them)
+    window.goUser = goUser;
+    window.goBusiness = goBusiness;
+    window.previewUser = previewUser;
+    window.previewBiz = previewBiz;
 
     // ------- Tesla micro-interactions (desktop tilt only) -------
     const cards = document.querySelectorAll(".card");
-
-    // detect touch devices (phones)
     const isTouch = window.matchMedia("(pointer: coarse)").matches;
+
+    function bindCardNav(){
+      cards.forEach(card => {
+        card.addEventListener("click", (e) => {
+          if (e.target.closest("button")) return;
+          if (card.classList.contains("user")) goUser(e);
+          if (card.classList.contains("business")) goBusiness(e);
+        });
+      });
+    }
 
     if(!isTouch){
       cards.forEach(card => {
@@ -479,28 +530,17 @@ function previewBiz(){
         card.addEventListener("mouseleave", () => {
           card.style.transform = `rotateX(0deg) rotateY(0deg)`;
         });
+      });
 
-        card.addEventListener("click", (e) => {
-          if (e.target.closest("button")) return;
-          if (card.classList.contains("user")) goUser();
-          if (card.classList.contains("business")) goBusiness();
-        });
-      });
+      bindCardNav();
     } else {
-      // On phone: no tilt, but full-card tap works
-      cards.forEach(card => {
-        card.addEventListener("click", (e) => {
-          if (e.target.closest("button")) return;
-          if (card.classList.contains("user")) goUser();
-          if (card.classList.contains("business")) goBusiness();
-        });
-      });
+      bindCardNav();
     }
 
     // keyboard shortcuts (desktop)
     document.addEventListener("keydown", (e) => {
-      if(e.key === "1") goUser();
-      if(e.key === "2") goBusiness();
+      if(e.key === "1") goUser(e);
+      if(e.key === "2") goBusiness(e);
     });
   </script>
 </body>
