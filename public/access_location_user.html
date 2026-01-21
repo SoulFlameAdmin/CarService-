@@ -23,9 +23,15 @@
 
     *{ box-sizing:border-box; }
 
+    /* ✅ мобилен fix: overflow:auto вместо hidden */
     body{
-      margin:0; min-height:100svh; overflow:hidden;
-      font-family: Arial, Helvetica, sans-serif; color:var(--text);
+      margin:0;
+      min-height:100svh;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+
+      font-family: Arial, Helvetica, sans-serif;
+      color:var(--text);
       background:
         radial-gradient(1200px 700px at 15% 18%, rgba(0,0,0,.06), transparent 58%),
         radial-gradient(900px 560px at 78% 26%, rgba(0,0,0,.12), transparent 62%),
@@ -51,7 +57,8 @@
 
     .wrap{
       width:min(980px, 92vw);
-      margin:0 auto; min-height:100svh;
+      margin:0 auto;
+      min-height:100svh;
       display:flex; flex-direction:column; justify-content:center;
       padding: clamp(16px, 4vw, 28px) 10px;
       position:relative; z-index:2;
@@ -256,7 +263,7 @@
 
       <div class="step" style="margin-top:12px">
         <div class="chip" id="chipLogin">1) <strong>Google вход</strong></div>
-        <div class="chip" id="chipLoc">2) <strong>Продължи</strong></div>
+        <div class="chip" id="chipSave">2) <strong>Запис</strong></div>
         <div class="chip" id="chipGo">3) <strong>Карта</strong></div>
       </div>
 
@@ -275,8 +282,9 @@
         <b>Какво правим тук</b>
         <ul class="list">
           <li><b>Google вход</b> — за да имаш профил в приложението.</li>
+          <li><b>Запис</b> — създаваме/обновяваме <b>users/{uid}</b> във Firestore.</li>
           <li><b>Продължи</b> — отваря картата със сервизи.</li>
-          <li>Записваме <b>профил</b> във Firestore.</li>
+          <li style="margin-top:6px">Не записваме точни GPS координати на тази страница.</li>
         </ul>
       </div>
 
@@ -294,7 +302,7 @@
         </button>
 
         <button class="btn btnGhost" type="button" id="btnSkipLogin">
-          <span>Само тест (без вход)</span>
+          <span>Само тест (preview)</span>
           <span class="gIcon" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M9 6l6 6-6 6" stroke="rgba(11,11,13,.85)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -303,7 +311,6 @@
         </button>
       </div>
 
-      <!-- вместо локация: Продължи към карта -->
       <div class="actions" id="actionsContinue" style="display:none">
         <button class="btn btnPrimary" type="button" id="btnContinue">
           <span>Продължи</span>
@@ -324,14 +331,12 @@
   </div>
 
   <script type="module">
-    // ✅ Ползваме само ядро от /googlelogin
     import { auth } from "./googlelogin/firebase.js";
     import {
       googleLogin,
       handleRedirectResult,
       friendlyAuthError
     } from "./googlelogin/google-auth.js";
-
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
     // --- UI refs ---
@@ -340,7 +345,7 @@
     const actionsContinue = document.getElementById("actionsContinue");
 
     const chipLogin = document.getElementById("chipLogin");
-    const chipLoc = document.getElementById("chipLoc");
+    const chipSave = document.getElementById("chipSave");
     const chipGo = document.getElementById("chipGo");
 
     const userBox = document.getElementById("userBox");
@@ -354,6 +359,7 @@
     const btnLogout = document.getElementById("btnLogout");
     const btnBack = document.getElementById("btnBack");
 
+    // ===== helpers (state contract) =====
     function setStatus(msg){
       statusBox.classList.add("show");
       statusBox.textContent = msg;
@@ -365,15 +371,41 @@
       if(mode === "no") el.classList.add("no");
     }
 
+    function isPreview(){
+      const url = new URL(window.location.href);
+      const qp = url.searchParams.get("preview");
+      const ls = localStorage.getItem("SF_PREVIEW");
+      return qp === "1" || ls === "1";
+    }
+
+    function setPreview(on){
+      localStorage.setItem("SF_PREVIEW", on ? "1" : "0");
+      // и “общ” режим ключ (за map_user.html)
+      localStorage.setItem("SF_MODE", "user");
+    }
+
+    function persistCityIfAny(){
+      const url = new URL(window.location.href);
+      const city = url.searchParams.get("city");
+      if(city) localStorage.setItem("SF_CITY", city);
+    }
+
     function nextToMap(){
-      // Работи и на localhost, и на Vercel
-      const u = new URL("/map_user.html", window.location.origin);
-      u.search = window.location.search;
+      // ✅ по-сигурно routing: относителен път
+      const u = new URL("./map_user.html", window.location.href);
+
+      // пренасяме preview/city параметри
+      const cur = new URL(window.location.href);
+      if(cur.searchParams.get("preview") === "1") u.searchParams.set("preview","1");
+      if(cur.searchParams.get("city")) u.searchParams.set("city", cur.searchParams.get("city"));
+
       window.location.href = u.toString();
     }
 
     function saveLocalUser(u){
       localStorage.setItem("sf_cs_user", JSON.stringify(u));
+      localStorage.setItem("SF_MODE", "user");
+      localStorage.setItem("SF_UID", u.uid);
     }
 
     // ===== UI state =====
@@ -387,7 +419,6 @@
       userMail.textContent = user.email || "";
 
       setChip(chipLogin, "ok");
-      setChip(chipLoc, "ok"); // продължи е налично
       setChip(chipGo, "no");
     }
 
@@ -397,21 +428,28 @@
       userBox.classList.remove("show");
 
       setChip(chipLogin, "no");
-      setChip(chipLoc, "no");
+      setChip(chipSave, "no");
       setChip(chipGo, "no");
     }
 
-    // ===== Auth =====
+    // ===== Login flow =====
     async function doGoogleLogin(){
       if(location.protocol === "file:"){
         setStatus("❌ Отвори през http://localhost или Vercel (не file://).");
         return;
       }
+
       setStatus("⌛ Вход с Google…");
+      setChip(chipLogin, "no");
+      setChip(chipSave, "no");
+      setChip(chipGo, "no");
 
       try{
-        const user = await googleLogin();
+        // ✅ подай mode към googleLogin (ще стигне до upsertUserProfile)
+        const user = await googleLogin({ mode: isPreview() ? "preview" : "live" });
+
         if(user){
+          // local session
           saveLocalUser({
             uid: user.uid,
             email: user.email || null,
@@ -421,20 +459,34 @@
           });
 
           showLoggedIn(user);
-          setStatus("✅ Успешен вход. Натисни „Продължи“.");
+
+          // ✅ Firestore upsert вече е направен в googleLogin()
+          setChip(chipLogin, "ok");
+          setChip(chipSave, "ok");
+          setStatus("✅ SoulFlame save data successfully!\nНатисни „Продължи“.");
         }else{
+          // redirect flow започна
           setStatus("⌛ Redirect вход… довършвам…");
         }
       }catch(err){
         console.error(err);
-        setStatus("❌ " + friendlyAuthError(err));
+
+        // ⚠️ ако Firestore fail, все пак позволяваме да продължи (не блокираме app)
+        // но казваме истината
+        setChip(chipLogin, "no");
+        setChip(chipSave, "no");
+        setStatus("⚠️ Входът/записът не успя:\n" + friendlyAuthError(err) + "\n\nМожеш да пробваш пак.");
       }
     }
 
+    let bootHandledRedirect = false;
+
     async function handleRedirectIfAny(){
       try{
-        const user = await handleRedirectResult();
+        const user = await handleRedirectResult({ mode: isPreview() ? "preview" : "live" });
         if(user){
+          bootHandledRedirect = true;
+
           saveLocalUser({
             uid: user.uid,
             email: user.email || null,
@@ -444,7 +496,10 @@
           });
 
           showLoggedIn(user);
-          setStatus("✅ Успешен вход (redirect). Натисни „Продължи“.");
+
+          setChip(chipLogin, "ok");
+          setChip(chipSave, "ok");
+          setStatus("✅ SoulFlame save data successfully! (redirect)\nНатисни „Продължи“.");
         }
       }catch(err){
         console.error(err);
@@ -460,14 +515,19 @@
 
     btnContinue.addEventListener("click", () => {
       setChip(chipGo, "ok");
+
+      // ✅ ако е preview, гарантираме че SF_PREVIEW е 1
+      setPreview(isPreview());
+
       setStatus("✅ Отварям картата…");
-      setTimeout(nextToMap, 150);
+      setTimeout(nextToMap, 120);
     });
 
     btnLogout.addEventListener("click", async () => {
       try{
         await signOut(auth);
         localStorage.removeItem("sf_cs_user");
+        localStorage.removeItem("SF_UID");
         setStatus("✅ Изход. Влез пак с Google.");
         showLoggedOut();
       }catch(e){
@@ -476,16 +536,28 @@
     });
 
     btnSkipLogin.addEventListener("click", () => {
-      setStatus("⚠️ Тест режим: без вход. Натисни „Продължи“.");
+      // ✅ истински preview режим
+      setPreview(true);
+
+      // добавяме preview=1 в URL (стабилно пренасяне)
+      const u = new URL(window.location.href);
+      u.searchParams.set("preview","1");
+      history.replaceState({}, "", u.toString());
+
+      setChip(chipLogin, "ok");
+      setChip(chipSave, "ok"); // в preview приемаме “виртуален” save contract (без firestore)
+      setStatus("⚠️ Preview режим: без Google вход.\nНатисни „Продължи“.");
+
       actionsLogin.style.display = "none";
       actionsContinue.style.display = "flex";
-      setChip(chipLogin, "ok");
-      setChip(chipLoc, "ok");
     });
 
     // ===== Boot =====
     (async function boot(){
       setStatus("Зареждам…");
+
+      persistCityIfAny();
+      setPreview(isPreview()); // синхронизираме preview state
 
       if(location.protocol === "file:"){
         setStatus("⚠️ Отвори през http://localhost или Vercel (не file://).");
@@ -504,10 +576,26 @@
           });
 
           showLoggedIn(user);
-          setStatus("✅ Влязъл си. Натисни „Продължи“.");
+          setChip(chipLogin, "ok");
+          setChip(chipSave, "ok");
+
+          // ✅ ако вече имаме redirect success, не презаписваме статуса с “Първо вход”
+          if(!bootHandledRedirect){
+            setStatus("✅ Влязъл си. SoulFlame save data successfully!\nНатисни „Продължи“.");
+          }
         }else{
           showLoggedOut();
-          setStatus("Първо: вход с Google.");
+
+          // ако сме в preview, показваме правилния текст
+          if(isPreview()){
+            actionsLogin.style.display = "none";
+            actionsContinue.style.display = "flex";
+            setChip(chipLogin, "ok");
+            setChip(chipSave, "ok");
+            setStatus("⚠️ Preview режим активен.\nНатисни „Продължи“.");
+          }else{
+            setStatus("Първо: вход с Google.");
+          }
         }
       });
     })();
