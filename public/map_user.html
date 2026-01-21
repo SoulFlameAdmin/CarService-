@@ -3,7 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SoulFlame CarService — Map (User / Active)</title>
+  <title>SoulFlame CarService — Map (Active)</title>
+
+  <!-- анти-cache (помага срещу Ctrl+F5) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <!-- малък favicon (за да няма 404) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' x='6' font-size='48'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E"/>
 
   <style>
     html, body { margin:0; padding:0; height:100%; font-family: Arial, sans-serif; }
@@ -139,6 +147,7 @@
       font-size:12px; line-height:1.45;
       color:rgba(17,24,39,.75);
     }
+
     @media (max-width:520px){
       #bizRow{ flex-direction:column; }
     }
@@ -151,6 +160,7 @@
       white-space: nowrap;
     }
 
+    /* ===== Right Slide Panel ===== */
     #rightPanel{
       position:fixed;
       top:0;
@@ -277,13 +287,7 @@
       line-height:1.45;
     }
     .msg b{ display:block; font-size:11px; opacity:.75; margin-bottom:4px; }
-
-    .miniActions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
-    }
+    .miniActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   </style>
 </head>
 
@@ -316,10 +320,11 @@
       <button id="bizCheck">Открий</button>
     </div>
     <div id="bizHint">
-      Въведи код → ще фокусирам сервиза на картата (кодът НЕ се показва никъде в списъка)
+      Въведи код → фокусирам сервиза на картата (кодът НЕ се показва никъде в списъка)
     </div>
   </div>
 
+  <!-- Right panel -->
   <aside id="rightPanel">
     <div id="rpHead">
       <div style="min-width:0;flex:1">
@@ -364,7 +369,7 @@
 
         <div class="f">
           <label>Описание</label>
-          <textarea id="pDesc" placeholder="Напиши кратко описание за сервиза..."></textarea>
+          <textarea id="pDesc" placeholder="Кратко описание..."></textarea>
         </div>
 
         <div class="rpBtns">
@@ -373,7 +378,7 @@
         </div>
 
         <div style="margin-top:10px;font-size:11px;opacity:.75">
-          *MVP: пази се в localStorage.
+          *MVP: пази се в localStorage. После го връзваме към Firestore.
         </div>
       </div>
 
@@ -399,39 +404,10 @@
     const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
     const AUTO_REFRESH_MS = 30 * 60 * 1000;
 
-    // Активирани сервизи (от Business Access)
+    // ====== Active Services Storage ======
     const ACTIVE_KEY = "sf_cs_activated_services";
     let viewMode = "active"; // "active" | "all"
-    let activeMetaByCode = new Map();
-
-    // ====== MAP VARS ======
-    let map, info;
-    let markersByCode = new Map();
-    let markers = [];
-    let lastData = [];
-    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
-
-    // ====== USER CENTER (GPS -> IP -> Default) ======
-    const USER_CENTER_KEY = "sf_cs_user_center_v1";
-    let userMarker = null;
-
-    // ====== UI ======
-    const panel = document.getElementById("panel-container");
-    const resultsEl = document.getElementById("results");
-    const statusEl = document.getElementById("status");
-    const countPill = document.getElementById("countPill");
-    const panelTitleEl = document.querySelector(".panel-title");
-
-    const btnReload = document.getElementById("btnReload");
-    const btnShowAll = document.getElementById("btnShowAll");
-    const bizCodeEl = document.getElementById("bizCode");
-    const bizCheckBtn = document.getElementById("bizCheck");
-
-    document.getElementById("menu-button").addEventListener("click", () => {
-      panel.style.display = (panel.style.display === "none") ? "block" : "none";
-    });
-
-    function setStatus(t){ statusEl.textContent = t; }
+    let activeMetaByCode = new Map(); // CODE -> meta
 
     function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
 
@@ -443,17 +419,6 @@
         .replace(/[^A-Z0-9\-]/g,"");
     }
 
-    function setPanelTitle(){
-      if(viewMode === "active"){
-        panelTitleEl.textContent = "Активни сервизи сега";
-        btnShowAll.textContent = "Покажи всички";
-      } else {
-        panelTitleEl.textContent = "Сливен — сервизи от TXT";
-        btnShowAll.textContent = "Покажи активни";
-      }
-    }
-
-    // ====== ACTIVE META ======
     function loadActiveMeta(){
       activeMetaByCode.clear();
       const arr = safeJson(localStorage.getItem(ACTIVE_KEY)) || [];
@@ -484,7 +449,45 @@
       return out;
     }
 
-    // ====== CENTER HELPERS ======
+    // ====== UI refs ======
+    const panel = document.getElementById("panel-container");
+    const resultsEl = document.getElementById("results");
+    const statusEl = document.getElementById("status");
+    const countPill = document.getElementById("countPill");
+    const panelTitleEl = document.querySelector(".panel-title");
+
+    const btnReload = document.getElementById("btnReload");
+    const btnShowAll = document.getElementById("btnShowAll");
+    const bizCodeEl = document.getElementById("bizCode");
+    const bizCheckBtn = document.getElementById("bizCheck");
+
+    document.getElementById("menu-button").addEventListener("click", () => {
+      panel.style.display = (panel.style.display === "none") ? "block" : "none";
+    });
+
+    function setStatus(t){ statusEl.textContent = t; }
+
+    function setPanelTitle(){
+      if(viewMode === "active"){
+        panelTitleEl.textContent = "Активни сервизи сега";
+        btnShowAll.textContent = "Покажи всички";
+      } else {
+        panelTitleEl.textContent = "Сливен — сервизи от TXT";
+        btnShowAll.textContent = "Покажи активни";
+      }
+    }
+
+    // ====== MAP ======
+    let map, info;
+    let markersByCode = new Map();
+    let markers = [];
+    let lastData = [];
+
+    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
+
+    const USER_CENTER_KEY = "sf_cs_user_center_v1";
+    let userMarker = null;
+
     function saveCenter(obj){
       try{ localStorage.setItem(USER_CENTER_KEY, JSON.stringify(obj)); }catch(_){}
     }
@@ -508,13 +511,7 @@
         const r = await fetch("https://ipwho.is/?fields=success,latitude,longitude,city,region,country", { cache:"no-store" });
         const j = await r.json();
         if(j?.success && Number.isFinite(j.latitude) && Number.isFinite(j.longitude)){
-          return {
-            lat: j.latitude,
-            lng: j.longitude,
-            city: j.city || "",
-            region: j.region || "",
-            country: j.country || ""
-          };
+          return { lat:j.latitude, lng:j.longitude, city:j.city||"", region:j.region||"", country:j.country||"" };
         }
       }catch(_){}
       return null;
@@ -523,17 +520,11 @@
     function showUserPin(pos){
       if(!map || !pos) return;
       if(userMarker) userMarker.setMap(null);
-
       userMarker = new google.maps.Marker({
         position: pos,
         map,
         title: "Твоята локация",
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 7,
-          fillOpacity: 1,
-          strokeWeight: 2
-        }
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillOpacity: 1, strokeWeight: 2 }
       });
     }
 
@@ -561,10 +552,10 @@
       return { center: SLIVEN_CENTER, zoom: 12, label: "Локация: default (Сливен)" };
     }
 
-    // ====== TXT LOADING ======
+    // ====== TXT LOADING (без кеш) ======
     async function fetchTxt(url){
-      const res = await fetch(url, { cache: "no-store" });
-      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери /QR_serveses/.");
+      const res = await fetch(url + "?v=" + Date.now(), { cache: "no-store" });
+      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери /public/QR_serveses/.");
       return await res.text();
     }
 
@@ -584,15 +575,13 @@
         const addr = parts[2] || "";
         const lat = Number(String(parts[3]).replace(",", "."));
         const lng = Number(String(parts[4]).replace(",", "."));
-        const source = parts.slice(5).join(" | ").trim();
 
         if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, source, raw: line });
+        out.push({ code, name, addr, lat, lng, raw: line });
       }
       return out;
     }
 
-    // ====== RENDER HELPERS ======
     function clearMarkers(){
       for(const m of markers) m.setMap(null);
       markers = [];
@@ -652,7 +641,7 @@
 
       if(!rows.length){
         resultsEl.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.75">
-          ${activeMode ? "Няма активирани сервизи още." : "Няма резултати."}
+          ${activeMode ? "Няма активирани сервизи още. Активирай от Business Access (Google + код)." : "Няма резултати."}
         </div>`;
         return;
       }
@@ -775,7 +764,6 @@
 
         loadActiveMeta();
         applyView(rows);
-
       }catch(err){
         console.error(err);
         setStatus("Грешка: " + (err?.message || err));
@@ -820,21 +808,66 @@
 
     let currentRow = null;
 
+    function getProfiles(){ return safeJson(localStorage.getItem("sf_cs_biz_profiles")) || {}; }
+    function saveBizProfile(code, patch){
+      const key = normalizeCode(code);
+      const all = getProfiles();
+      all[key] = Object.assign({}, all[key] || {}, patch);
+      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
+    }
+    function deleteBizProfile(code){
+      const key = normalizeCode(code);
+      const all = getProfiles();
+      delete all[key];
+      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
+    }
+    function loadProfileIntoUI(code){
+      const key = normalizeCode(code);
+      const all = getProfiles();
+      const p = all[key] || {};
+      pPhone.value = p.phone || "";
+      pHours.value = p.hours || "";
+      pServices.value = p.services || "";
+      pDesc.value = p.desc || "";
+    }
+
+    function chatKey(code){ return "sf_cs_chat_" + normalizeCode(code); }
+    function getChat(code){ return safeJson(localStorage.getItem(chatKey(code))) || []; }
+    function pushChat(code, msg){
+      const arr = getChat(code);
+      arr.push(msg);
+      localStorage.setItem(chatKey(code), JSON.stringify(arr.slice(-60)));
+    }
+    function clearChat(code){ localStorage.removeItem(chatKey(code)); }
+    function renderChat(code){
+      const arr = getChat(code);
+      chatList.innerHTML = "";
+      if(!arr.length){
+        chatList.innerHTML = `<div style="font-size:12px;opacity:.7">Няма съобщения (локално).</div>`;
+        return;
+      }
+      arr.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "msg";
+        const ts = m.ts ? new Date(m.ts) : new Date();
+        div.innerHTML = `<b>${escapeHtml(m.from || "—")} • ${escapeHtml(ts.toLocaleString())}</b>${escapeHtml(m.text || "")}`;
+        chatList.appendChild(div);
+      });
+      chatList.scrollTop = chatList.scrollHeight;
+    }
+
     function wireRightPanel(){
       rpClose.addEventListener("click", () => rp.classList.remove("show"));
-
       btnCenter.addEventListener("click", () => {
         if(!currentRow) return;
         map.panTo({lat: currentRow.lat, lng: currentRow.lng});
         map.setZoom(16);
       });
-
       btnOpenGoogle.addEventListener("click", () => {
         if(!currentRow) return;
         const url = `https://www.google.com/maps/search/?api=1&query=${currentRow.lat},${currentRow.lng}`;
         window.open(url, "_blank", "noopener");
       });
-
       btnGoAccess.addEventListener("click", () => {
         window.location.href = "access_location_business.html";
       });
@@ -909,56 +942,8 @@
       }catch(_){}
     }
 
-    function getProfiles(){ return safeJson(localStorage.getItem("sf_cs_biz_profiles")) || {}; }
-    function saveBizProfile(code, patch){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      all[key] = Object.assign({}, all[key] || {}, patch);
-      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
-    }
-    function deleteBizProfile(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      delete all[key];
-      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
-    }
-    function loadProfileIntoUI(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      const p = all[key] || {};
-      pPhone.value = p.phone || "";
-      pHours.value = p.hours || "";
-      pServices.value = p.services || "";
-      pDesc.value = p.desc || "";
-    }
-
-    function chatKey(code){ return "sf_cs_chat_" + normalizeCode(code); }
-    function getChat(code){ return safeJson(localStorage.getItem(chatKey(code))) || []; }
-    function pushChat(code, msg){
-      const arr = getChat(code);
-      arr.push(msg);
-      localStorage.setItem(chatKey(code), JSON.stringify(arr.slice(-60)));
-    }
-    function clearChat(code){ localStorage.removeItem(chatKey(code)); }
-    function renderChat(code){
-      const arr = getChat(code);
-      chatList.innerHTML = "";
-      if(!arr.length){
-        chatList.innerHTML = `<div style="font-size:12px;opacity:.7">Няма съобщения (локално).</div>`;
-        return;
-      }
-      arr.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "msg";
-        const ts = m.ts ? new Date(m.ts) : new Date();
-        div.innerHTML = `<b>${escapeHtml(m.from || "—")} • ${escapeHtml(ts.toLocaleString())}</b>${escapeHtml(m.text || "")}`;
-        chatList.appendChild(div);
-      });
-      chatList.scrollTop = chatList.scrollHeight;
-    }
-
-    // ====== INIT MAP (callback) ======
-    async function initMap(){
+    // ====== GOOGLE CALLBACK (ГЛОБАЛНО!) ======
+    window.initMap = async function initMap(){
       loadActiveMeta();
       setPanelTitle();
 
@@ -973,27 +958,20 @@
       });
 
       info = new google.maps.InfoWindow();
+      wireRightPanel();
 
-      const loc = await resolveStartCenter();
-      map.setCenter(loc.center);
-      map.setZoom(loc.zoom);
-      showUserPin(loc.center);
-      setStatus(loc.label);
+      // център: GPS -> IP -> default (без да блокира картата)
+      resolveStartCenter().then(loc => {
+        map.setCenter(loc.center);
+        map.setZoom(loc.zoom);
+        showUserPin(loc.center);
+        setStatus(loc.label);
+      });
 
       const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
       if(urlBiz) bizCodeEl.value = urlBiz;
-      else {
-        const lastActive = safeJson(localStorage.getItem("sf_cs_business_active"));
-        if(lastActive?.code) bizCodeEl.value = normalizeCode(lastActive.code);
-      }
-
-      wireRightPanel();
-
-      await loadAndRender(true);
-      setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
 
       btnReload.addEventListener("click", () => loadAndRender(false));
-
       btnShowAll.addEventListener("click", () => {
         viewMode = (viewMode === "active") ? "all" : "active";
         loadActiveMeta();
@@ -1010,16 +988,15 @@
           if(viewMode === "active") applyView(lastData);
         }
       });
-    }
 
-    // ✅ важно: callback търси глобална функция
-    window.initMap = initMap;
+      await loadAndRender(true);
+      setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
+    };
   </script>
 
-  <!-- ✅ ЕДИНСТВЕНИЯТ Google Maps loader (без places/nearby) -->
+  <!-- ✅ Само ЕДИН Google Maps script. Без libraries=places. -->
   <script defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&callback=initMap&loading=async">
   </script>
-
 </body>
 </html>
