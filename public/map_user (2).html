@@ -194,6 +194,7 @@
         <button class="btn secondary" id="btnUseTxt">TXT (fallback)</button>
       </div>
 
+      <!-- Active(SF) + Main(Google/TXT) -->
       <div class="results" id="results">
         <div id="sfActiveWrap" style="display:none"></div>
         <div id="mainResults"></div>
@@ -206,32 +207,19 @@
   <div id="map"></div>
   <div id="status">Зареждам…</div>
 
-  <!-- ✅ BRIDGE: гаранция, че callback=initMap няма да гърми, дори JS да се зареди в грешен ред -->
-  <script>
-    window.__SF_MAP_CALLED = false;
-    window.__SF_MAP_READY = null;
-
-    window.initMap = function () {
-      window.__SF_MAP_CALLED = true;
-      if (typeof window.__SF_MAP_READY === "function") {
-        try { window.__SF_MAP_READY(); } catch (e) { console.error(e); }
-      }
-    };
-  </script>
-
   <script type="module">
     // ==========================================================
-    // ✅ Map User: Google Places + TXT + (Optional) Firestore Active
+    // ✅ Map User: Google Places + TXT + Firestore Active (businesses.isActive==true)
     // ==========================================================
 
     // ====== CONFIG ======
-    const API_KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ"; // твоя ключ (както беше)
+    const API_KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ";
 
     // Places Nearby
     const RADIUS_METERS = 8000;
     const MAX_RESULTS = 30;
 
-    // TXT fallback (задължително да е в /public/QR_serveses/)
+    // TXT fallback
     const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
     const AUTO_REFRESH_MS = 30 * 60 * 1000; // 30 мин
 
@@ -264,8 +252,23 @@
 
     function setStatus(t){ statusEl.textContent = t; }
 
-    // ====== Utils ======
+    // ====== localStorage ======
+    const ACTIVE_KEY_LOCAL = "sf_cs_activated_services"; // fallback demo (само локално)
+
     function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
+
+    function getSavedLocation(){
+      try { return JSON.parse(localStorage.getItem("sf_cs_location") || "null"); }
+      catch(e){ return null; }
+    }
+    function saveLocalLocation(mode, lat, lng, accuracy, source){
+      localStorage.setItem("sf_cs_location", JSON.stringify({
+        mode, lat, lng,
+        accuracy_m: accuracy ?? null,
+        ts: new Date().toISOString(),
+        source: source || "map"
+      }));
+    }
 
     function escapeHtml(str){
       return String(str).replace(/[&<>"']/g, m => ({
@@ -276,76 +279,23 @@
     function normalizePhoneForTel(phone){
       const p = String(phone || "").trim();
       if(!p) return "";
-      return p.replace(/[^0-9+]/g, "");
+      // оставям + и цифри
+      const cleaned = p.replace(/[^0-9+]/g, "");
+      return cleaned;
     }
 
-    function approxKm(lat1,lng1,lat2,lng2){
-      const kx = 111.32;
-      const ky = 111.32 * Math.cos((lat1*Math.PI)/180);
-      const dx = (lat2-lat1) * kx;
-      const dy = (lng2-lng1) * ky;
-      return Math.sqrt(dx*dx + dy*dy);
-    }
+    // ====== Firebase: import shared auth/db ======
+    import { auth, db, firebaseEnabled } from "./googlelogin/firebase.js";
 
-    // ====== Location storage ======
-    function getSavedLocation(){
-      try { return JSON.parse(localStorage.getItem("sf_cs_location") || "null"); }
-      catch(e){ return null; }
-    }
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    import {
+      doc, getDoc, setDoc, serverTimestamp,
+      collection, query, where, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-    function saveLocalLocation(mode, lat, lng, accuracy, source){
-      localStorage.setItem("sf_cs_location", JSON.stringify({
-        mode, lat, lng,
-        accuracy_m: accuracy ?? null,
-        ts: new Date().toISOString(),
-        source: source || "map"
-      }));
-    }
-
-    // ====== Optional Firebase (ако файлът липсва/се чупи => продължаваме без него) ======
-    let firebaseEnabled = false;
-    let auth = null;
-    let db = null;
-
-    // Firebase APIs (зареждаме ги само ако Firebase е OK)
-    let fbAuth = null;
-    let fbFs = null;
-
-    async function tryLoadFirebase(){
-      try{
-        // ✅ ABSOLUTE PATH: работи стабилно на Vercel
-        const mod = await import("/googlelogin/firebase.js");
-        firebaseEnabled = !!mod.firebaseEnabled;
-        auth = mod.auth || null;
-        db = mod.db || null;
-
-        if(firebaseEnabled && auth && db){
-          fbAuth = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js");
-          fbFs   = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js");
-          return true;
-        }
-      }catch(e){
-        console.warn("Firebase OFF / missing / import error:", e);
-      }
-      firebaseEnabled = false;
-      auth = null;
-      db = null;
-      fbAuth = null;
-      fbFs = null;
-      return false;
-    }
-
-    function showUser(user){
-      userStrip.style.display = "flex";
-      uImg.src = user.photoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='18' fill='%23ffffff'/%3E%3Cpath d='M40 41c9 0 16-7 16-16S49 9 40 9 24 16 24 25s7 16 16 16zm0 6c-13 0-24 7-24 16v4h48v-4c0-9-11-16-24-16z' fill='%230b0b0d' fill-opacity='.55'/%3E%3C/svg%3E";
-      uName.textContent = user.displayName || "User";
-      uMail.textContent = user.email || "";
-    }
-
+    // ====== Firestore helpers ======
     async function upsertUserProfile(user){
       if(!firebaseEnabled || !db || !user) return;
-      const { doc, setDoc, serverTimestamp } = fbFs;
-
       await setDoc(doc(db, "users", user.uid), {
         profile: {
           uid: user.uid,
@@ -380,11 +330,8 @@
       };
     }
 
-    let currentUid = null;
     const writeLastLocationThrottled = throttle(async (uid, loc) => {
       if(!firebaseEnabled || !db || !uid || !loc) return;
-      const { doc, setDoc, serverTimestamp } = fbFs;
-
       try{
         await setDoc(doc(db, "users", uid), {
           lastLocation: loc,
@@ -396,8 +343,6 @@
 
     async function readLastLocationFromFirestore(uid){
       if(!firebaseEnabled || !db || !uid) return null;
-      const { doc, getDoc } = fbFs;
-
       try{
         const snap = await getDoc(doc(db, "users", uid));
         if(!snap.exists()) return null;
@@ -409,6 +354,13 @@
         console.warn(e);
         return null;
       }
+    }
+
+    function showUser(user){
+      userStrip.style.display = "flex";
+      uImg.src = user.photoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='18' fill='%23ffffff'/%3E%3Cpath d='M40 41c9 0 16-7 16-16S49 9 40 9 24 16 24 25s7 16 16 16zm0 6c-13 0-24 7-24 16v4h48v-4c0-9-11-16-24-16z' fill='%230b0b0d' fill-opacity='.55'/%3E%3C/svg%3E";
+      uName.textContent = user.displayName || "User";
+      uMail.textContent = user.email || "";
     }
 
     // ====== MAP ======
@@ -429,7 +381,15 @@
 
     let lastSearchedCenter = null;
     let lastMode = "places"; // "places" | "txt"
-    const ACTIVE_KEY_LOCAL = "sf_cs_activated_services"; // локален fallback (demo)
+    let currentUid = null;
+
+    function approxKm(lat1,lng1,lat2,lng2){
+      const kx = 111.32;
+      const ky = 111.32 * Math.cos((lat1*Math.PI)/180);
+      const dx = (lat2-lat1) * kx;
+      const dy = (lng2-lng1) * ky;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
 
     function clearPlaceMarkers(){
       placeMarkers.forEach(m => m.setMap(null));
@@ -586,7 +546,7 @@
 
     function subscribeActiveServicesRealtime(){
       // Ако Firebase е off → само локален fallback (ако има)
-      if(!firebaseEnabled || !db || !fbFs){
+      if(!firebaseEnabled || !db){
         const localRows = getLocalActiveRowsFallback();
         activeRows = localRows;
         renderActivePanel(activeRows, localRows.length ? "LOCAL" : "");
@@ -596,8 +556,6 @@
 
       if(activeUnsub) { try{ activeUnsub(); }catch(e){} activeUnsub = null; }
 
-      const { collection, query, where, onSnapshot } = fbFs;
-
       // ✅ Firestore: businesses where isActive == true
       const q = query(collection(db, "businesses"), where("isActive", "==", true));
 
@@ -606,6 +564,7 @@
         snap.forEach((ds) => {
           const d = ds.data() || {};
 
+          // толеранс: може да е lat/lng или location:{lat,lng} или gps:{lat,lng}
           const lat = Number(d.lat ?? d.location?.lat ?? d.gps?.lat);
           const lng = Number(d.lng ?? d.location?.lng ?? d.gps?.lng);
           if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -627,9 +586,10 @@
           });
         });
 
+        // newest first
         rows.sort((a,b) => (b._ts || 0) - (a._ts || 0));
 
-        // ако няма Firestore active още → fallback към LOCAL
+        // ако няма Firestore active още → fallback към LOCAL (за да не изглежда “празно” по време на прехода)
         const localRows = getLocalActiveRowsFallback();
         activeRows = rows.length ? rows : localRows;
 
@@ -638,6 +598,7 @@
 
       }, (err) => {
         console.warn(err);
+        // ако rules/permissions са зле — fallback
         const localRows = getLocalActiveRowsFallback();
         activeRows = localRows;
         renderActivePanel(activeRows, localRows.length ? "LOCAL" : "");
@@ -645,8 +606,8 @@
       });
     }
 
-    // ====== MAIN INIT (called by Google callback) ======
-    async function __sfInitEverything(){
+    // ====== initMap (Google callback) ======
+    window.initMap = async function initMap(){
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 14,
         center: SLIVEN_CENTER,
@@ -694,29 +655,19 @@
       }, AUTO_REFRESH_MS);
 
       await bootstrapStart();
-    }
-
-    // ✅ Връзка към bridge-а
-    window.__SF_MAP_READY = __sfInitEverything;
-
-    // ако callback се е извикал по-рано, стартираме веднага
-    if(window.__SF_MAP_CALLED) {
-      try { window.__SF_MAP_READY(); } catch(e){ console.error(e); }
-    }
+    };
 
     async function bootstrapStart(){
-      setStatus("Проверявам вход/модули…");
+      setStatus("Проверявам вход…");
 
-      // 1) Опитай Firebase (но не го прави задължително)
-      const fbOk = await tryLoadFirebase();
-
-      if(!fbOk){
-        setStatus("⚠️ Firebase OFF. Картата работи (Places/TXT), но няма login/LIVE Active.");
+      // 1) Ако Firebase е off → няма redirect/login, но няма и LIVE Active
+      if(!firebaseEnabled || !auth){
+        setStatus("⚠️ Firebase OFF. Картата работи, но няма LIVE Active/логин.");
         subscribeActiveServicesRealtime();
 
         const loc = getSavedLocation();
         if(loc?.lat && loc?.lng){
-          setStatus("Ползвам локация от localStorage…");
+          setStatus("Ползвам локацията от localStorage…");
           setPinAndSearch(loc.lat, loc.lng, true);
         }else{
           setStatus("Няма локация. Ползвам Сливен.");
@@ -726,8 +677,6 @@
       }
 
       // 2) Auth state
-      const { onAuthStateChanged, signOut } = fbAuth;
-
       onAuthStateChanged(auth, async (user) => {
         if(!user){
           setStatus("❌ Няма login. Връщам към access_location_user.html…");
@@ -739,8 +688,14 @@
         showUser(user);
         try{ await upsertUserProfile(user); }catch(e){ console.warn(e); }
 
+        // ✅ LIVE Active
         subscribeActiveServicesRealtime();
 
+        // 3) Location priority:
+        // a) localStorage
+        // b) firestore lastLocation
+        // c) geolocation now
+        // d) fallback Sliven
         const localLoc = getSavedLocation();
         if(localLoc && typeof localLoc.lat === "number" && typeof localLoc.lng === "number"){
           setStatus("Ползвам локацията от Access screen (localStorage)…");
@@ -840,6 +795,7 @@
       map.setCenter(pos);
       map.setZoom(14);
 
+      // ✅ запази последна локация
       saveLocalLocation("user", lat, lng, null, "pin");
       if(currentUid){
         writeLastLocationThrottled(currentUid, {
@@ -927,7 +883,7 @@
 
         const msg = String(err && err.message ? err.message : err);
         if(msg.includes("403") || msg.includes("PERMISSION_DENIED")){
-          setStatus("403: Places API OFF / Billing OFF / ограничения на key. Пускам TXT fallback…");
+          setStatus("403: Places API OFF / Billing OFF / key restrictions. Пускам TXT fallback…");
         }else{
           setStatus("Грешка Places API. Пускам TXT fallback…");
         }
@@ -1071,7 +1027,7 @@
         const source = parts.slice(lngIdx+1).join(" | ");
 
         if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, source, raw: line });
+        out.push({ code, name, addr, lat, lng, source,raw: line });
       }
       return out;
     }
@@ -1177,10 +1133,9 @@
         </div>`;
       }
     }
-
   </script>
 
-  <!-- ✅ Google Maps JS (единствен loader) -->
+  <!-- ✅ Google Maps JS (callback към window.initMap) -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&libraries=places&callback=initMap">
   </script>
