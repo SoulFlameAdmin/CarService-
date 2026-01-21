@@ -484,63 +484,181 @@
       }
     }
 
-    // ====== MAP ======
-    let map, info;
-    let markersByCode = new Map();
-    let markers = [];
-    let lastData = [];
+<!-- ✅ Постави ТОЗИ ЦЯЛ БЛОК като заместиш твоя MAP секция 1:1 -->
+<script>
+"use strict";
 
-    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
+// ====== MAP ======
+let map, info;
+let markersByCode = new Map();
+let markers = [];
+let lastData = [];
 
-    function initMap(){
-      loadActiveMeta();
-      setPanelTitle();
+const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
 
-      map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: SLIVEN_CENTER,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-          position: google.maps.ControlPosition.TOP_RIGHT
-        }
-      });
+/* =========================
+   USER CENTER (GPS -> IP City/Region -> Default)
+========================= */
+const USER_CENTER_KEY = "sf_cs_user_center_v1";
+let userMarker = null;
 
-      info = new google.maps.InfoWindow();
+function saveCenter(obj){
+  try{ localStorage.setItem(USER_CENTER_KEY, JSON.stringify(obj)); }catch(_){}
+}
+function loadCenter(){
+  try{ return JSON.parse(localStorage.getItem(USER_CENTER_KEY) || "null"); }catch(_){ return null; }
+}
 
-      // preload code from ?biz= OR last active
-      const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
-      if(urlBiz) bizCodeEl.value = urlBiz;
-      else {
-        const lastActive = safeJson(localStorage.getItem("sf_cs_business_active"));
-        if(lastActive?.code) bizCodeEl.value = normalizeCode(lastActive.code);
-      }
+function getBrowserGeo(timeoutMs=6500){
+  return new Promise((resolve) => {
+    if(!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy:true, timeout: timeoutMs, maximumAge: 60_000 }
+    );
+  });
+}
 
-      wireRightPanel();
-
-      loadAndRender(true);
-      setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
-
-      btnReload.addEventListener("click", () => loadAndRender(false));
-      btnShowAll.addEventListener("click", () => {
-        viewMode = (viewMode === "active") ? "all" : "active";
-        loadActiveMeta();
-        setPanelTitle();
-        applyView(lastData);
-      });
-
-      bizCheckBtn.addEventListener("click", () => activateByCode());
-      bizCodeEl.addEventListener("keydown", (e) => { if(e.key === "Enter") activateByCode(); });
-
-      // ако в друг таб стане нов activation -> refresh активните
-      window.addEventListener("storage", (e) => {
-        if(e.key === ACTIVE_KEY){
-          loadActiveMeta();
-          if(viewMode === "active") applyView(lastData);
-        }
-      });
+// IP geolocation (град/област) — без ключ, работи във Vercel
+async function getIpGeo(){
+  try{
+    const r = await fetch("https://ipwho.is/?fields=success,latitude,longitude,city,region,country", { cache:"no-store" });
+    const j = await r.json();
+    if(j?.success && Number.isFinite(j.latitude) && Number.isFinite(j.longitude)){
+      return {
+        lat: j.latitude,
+        lng: j.longitude,
+        city: j.city || "",
+        region: j.region || "",
+        country: j.country || ""
+      };
     }
-    window.initMap = initMap;
+  }catch(_){}
+  return null;
+}
+
+function showUserPin(pos){
+  if(!map || !pos) return;
+
+  if(userMarker) userMarker.setMap(null);
+
+  userMarker = new google.maps.Marker({
+    position: pos,
+    map,
+    title: "Твоята локация",
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 7,
+      fillOpacity: 1,
+      strokeWeight: 2
+    }
+  });
+}
+
+async function resolveStartCenter(){
+  // 0) ако имаме запазен център — ползваме него
+  const saved = loadCenter();
+  if(saved?.lat && saved?.lng){
+    return { center: {lat:saved.lat, lng:saved.lng}, zoom: saved.zoom || 12, label: saved.label || "Последна локация" };
+  }
+
+  // 1) GPS
+  const geo = await getBrowserGeo();
+  if(geo){
+    const out = { center: geo, zoom: 13, label: "Локация: GPS" };
+    saveCenter({ lat: geo.lat, lng: geo.lng, zoom: out.zoom, label: out.label, ts: Date.now() });
+    return out;
+  }
+
+  // 2) IP (град/област)
+  const ip = await getIpGeo();
+  if(ip){
+    const label = `Локация: ${ip.city || "—"}, ${ip.region || "—"}`;
+    const out = { center: {lat: ip.lat, lng: ip.lng}, zoom: 12, label };
+    saveCenter({ lat: ip.lat, lng: ip.lng, zoom: out.zoom, label: out.label, ts: Date.now() });
+    return out;
+  }
+
+  // 3) default
+  return { center: SLIVEN_CENTER, zoom: 12, label: "Локация: default (Сливен)" };
+}
+
+
+
+
+
+
+
+
+
+
+/* =========================
+   INIT MAP (async)
+========================= */
+async function initMap(){
+  loadActiveMeta();
+  setPanelTitle();
+
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 12,
+    center: SLIVEN_CENTER,
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.TOP_RIGHT
+    }
+  });
+
+  info = new google.maps.InfoWindow();
+
+  // ✅ Центриране по град/област (GPS -> IP -> default)
+  const loc = await resolveStartCenter();
+  map.setCenter(loc.center);
+  map.setZoom(loc.zoom);
+  showUserPin(loc.center);
+  setStatus(loc.label);
+
+  // preload code from ?biz= OR last active
+  const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
+  if(urlBiz) bizCodeEl.value = urlBiz;
+  else {
+    const lastActive = safeJson(localStorage.getItem("sf_cs_business_active"));
+    if(lastActive?.code) bizCodeEl.value = normalizeCode(lastActive.code);
+  }
+
+  wireRightPanel();
+
+  loadAndRender(true);
+  setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
+
+  btnReload.addEventListener("click", () => loadAndRender(false));
+  btnShowAll.addEventListener("click", () => {
+    viewMode = (viewMode === "active") ? "all" : "active";
+    loadActiveMeta();
+    setPanelTitle();
+    applyView(lastData);
+  });
+
+  bizCheckBtn.addEventListener("click", () => activateByCode());
+  bizCodeEl.addEventListener("keydown", (e) => { if(e.key === "Enter") activateByCode(); });
+
+  // ако в друг таб стане нов activation -> refresh активните
+  window.addEventListener("storage", (e) => {
+    if(e.key === ACTIVE_KEY){
+      loadActiveMeta();
+      if(viewMode === "active") applyView(lastData);
+    }
+  });
+}
+window.initMap = initMap;
+</script>
+
+<!-- ✅ И МНОГО ВАЖНО: смени твоя Google Maps script така (без places, без async) -->
+<script defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&callback=initMap&loading=async">
+</script>
+
 
     // ====== TXT LOADING ======
     async function fetchTxt(url){
