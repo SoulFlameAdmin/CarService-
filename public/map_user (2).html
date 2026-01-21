@@ -166,6 +166,18 @@
       #panel-container{ width:min(380px, 92vw); }
     }
   </style>
+
+  <!-- ✅ Placeholder initMap (решава “initMap is not a function”) -->
+  <script>
+    window.__sf_map_callback_called = false;
+
+    window.initMap = function () {
+      window.__sf_map_callback_called = true;
+      if (typeof window.__sf_startMap === "function") {
+        window.__sf_startMap();
+      }
+    };
+  </script>
 </head>
 
 <body>
@@ -219,7 +231,7 @@
     const RADIUS_METERS = 8000;
     const MAX_RESULTS = 30;
 
-    // TXT fallback
+    // TXT fallback (Vercel case-sensitive!)
     const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
     const AUTO_REFRESH_MS = 30 * 60 * 1000; // 30 мин
 
@@ -279,12 +291,11 @@
     function normalizePhoneForTel(phone){
       const p = String(phone || "").trim();
       if(!p) return "";
-      // оставям + и цифри
-      const cleaned = p.replace(/[^0-9+]/g, "");
-      return cleaned;
+      return p.replace(/[^0-9+]/g, "");
     }
 
     // ====== Firebase: import shared auth/db ======
+    // ВАЖНО: увери се, че файлът е точно: public/googlelogin/firebase.js (case-sensitive)
     import { auth, db, firebaseEnabled } from "./googlelogin/firebase.js";
 
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
@@ -563,8 +574,6 @@
         const rows = [];
         snap.forEach((ds) => {
           const d = ds.data() || {};
-
-          // толеранс: може да е lat/lng или location:{lat,lng} или gps:{lat,lng}
           const lat = Number(d.lat ?? d.location?.lat ?? d.gps?.lat);
           const lng = Number(d.lng ?? d.location?.lng ?? d.gps?.lng);
           if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -586,10 +595,8 @@
           });
         });
 
-        // newest first
         rows.sort((a,b) => (b._ts || 0) - (a._ts || 0));
 
-        // ако няма Firestore active още → fallback към LOCAL (за да не изглежда “празно” по време на прехода)
         const localRows = getLocalActiveRowsFallback();
         activeRows = rows.length ? rows : localRows;
 
@@ -598,7 +605,6 @@
 
       }, (err) => {
         console.warn(err);
-        // ако rules/permissions са зле — fallback
         const localRows = getLocalActiveRowsFallback();
         activeRows = localRows;
         renderActivePanel(activeRows, localRows.length ? "LOCAL" : "");
@@ -606,8 +612,12 @@
       });
     }
 
-    // ====== initMap (Google callback) ======
-    window.initMap = async function initMap(){
+    // ====== Реалният старт на картата (вика се от placeholder initMap) ======
+    window.__sf_startMap = async function __sf_startMap(){
+      // защита срещу двойно стартиране
+      if (window.__sf_started) return;
+      window.__sf_started = true;
+
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 14,
         center: SLIVEN_CENTER,
@@ -657,10 +667,14 @@
       await bootstrapStart();
     };
 
+    // ако callback вече е бил викнат преди модула да се зареди:
+    if (window.__sf_map_callback_called && typeof window.__sf_startMap === "function") {
+      window.__sf_startMap();
+    }
+
     async function bootstrapStart(){
       setStatus("Проверявам вход…");
 
-      // 1) Ако Firebase е off → няма redirect/login, но няма и LIVE Active
       if(!firebaseEnabled || !auth){
         setStatus("⚠️ Firebase OFF. Картата работи, но няма LIVE Active/логин.");
         subscribeActiveServicesRealtime();
@@ -676,7 +690,6 @@
         return;
       }
 
-      // 2) Auth state
       onAuthStateChanged(auth, async (user) => {
         if(!user){
           setStatus("❌ Няма login. Връщам към access_location_user.html…");
@@ -688,14 +701,8 @@
         showUser(user);
         try{ await upsertUserProfile(user); }catch(e){ console.warn(e); }
 
-        // ✅ LIVE Active
         subscribeActiveServicesRealtime();
 
-        // 3) Location priority:
-        // a) localStorage
-        // b) firestore lastLocation
-        // c) geolocation now
-        // d) fallback Sliven
         const localLoc = getSavedLocation();
         if(localLoc && typeof localLoc.lat === "number" && typeof localLoc.lng === "number"){
           setStatus("Ползвам локацията от Access screen (localStorage)…");
@@ -714,7 +721,6 @@
         locateAndSearch(true);
       });
 
-      // Logout
       btnLogout.addEventListener("click", async () => {
         try{
           if(activeUnsub){ try{ activeUnsub(); }catch(e){} activeUnsub = null; }
@@ -795,7 +801,6 @@
       map.setCenter(pos);
       map.setZoom(14);
 
-      // ✅ запази последна локация
       saveLocalLocation("user", lat, lng, null, "pin");
       if(currentUid){
         writeLastLocationThrottled(currentUid, {
@@ -987,11 +992,11 @@
     // ====== TXT LOADING (fallback) ======
     async function fetchTxt(url){
       const res = await fetch(url, { cache: "no-store" });
-      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери пътя и че е в public.");
+      if(!res.ok) throw new Error(`Не мога да заредя TXT (${res.status}). Провери пътя и че е в public.`);
       return await res.text();
     }
 
-    // SF-SLV-001 | Name | Address | 42.xxxxx | 26.xxxxx | Source
+    // Твоят TXT е "|" отделен и има header ред → парсера го игнорира.
     function parseTxt(txt){
       const lines = String(txt || "")
         .split(/\r?\n/)
@@ -1027,7 +1032,7 @@
         const source = parts.slice(lngIdx+1).join(" | ");
 
         if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, source,raw: line });
+        out.push({ code, name, addr, lat, lng, source, raw: line });
       }
       return out;
     }
@@ -1128,9 +1133,11 @@
         console.error(err);
         setStatus("Грешка TXT: " + (err?.message || err));
         countPill.textContent = "0";
-        resultsEl.innerHTML = `<div style="padding:10px;color:#b91c1c;font-weight:900">
-          Не мога да заредя TXT. Провери: public/QR_serveses/sliven_avtoservizi.txt
-        </div>`;
+        resultsEl.innerHTML = `
+          <div style="padding:10px;color:#b91c1c;font-weight:900">
+            Не мога да заредя TXT. Провери: public/QR_serveses/sliven_avtoservizi.txt
+          </div>
+        `;
       }
     }
   </script>
