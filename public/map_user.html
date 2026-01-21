@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>SoulFlame CarService — Map (User)</title>
 
-  <!-- (помага, но главното е vercel.json) -->
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
   <style>
     html, body { margin:0; padding:0; height:100%; font-family: Arial, sans-serif; }
     #map { height:100%; width:100%; }
@@ -39,15 +34,9 @@
       border:1px solid rgba(17,24,39,.12);
       background:#fff; color:#111827;
       font-weight:900;
-      display:flex; gap:8px; align-items:center;
-    }
-    .dot{
-      width:8px; height:8px; border-radius:50%;
-      background:#10b981;
-      box-shadow:0 0 0 4px rgba(16,185,129,.18);
     }
 
-    .controls{ display:flex; gap:8px; flex-wrap:wrap; }
+    .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
     .btn{
       border:none; cursor:pointer; border-radius:12px;
       padding:10px 12px; font-weight:900; font-size:12px; letter-spacing:.6px;
@@ -58,9 +47,37 @@
       border:1px solid rgba(17,24,39,.14);
     }
 
+    .row{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .chip{
+      font-size:12px; padding:8px 10px; border-radius:999px;
+      border:1px solid rgba(17,24,39,.12);
+      background:#fff; color:#111827;
+      font-weight:900;
+      display:flex; gap:8px; align-items:center;
+    }
+    .chip input{
+      width:84px; border:none; outline:none; font-weight:900;
+      background:transparent;
+    }
+    .chip small{ opacity:.7; font-weight:900; }
+
+    .search{
+      width:100%;
+      border:1px solid rgba(17,24,39,.14);
+      border-radius:12px;
+      padding:10px 10px;
+      outline:none;
+      font-weight:900;
+      font-size:13px;
+      background:#fff;
+      color:#111827;
+    }
+
     .results{
       overflow:auto;
-      max-height: calc(72vh - 230px);
+      max-height: calc(72vh - 260px);
       padding-right:4px;
     }
 
@@ -72,14 +89,10 @@
     }
 
     .badge{
-      min-width:54px;
-      width:54px;
-      height:54px;
+      min-width:54px; width:54px; height:54px;
       border-radius:16px;
       background: rgba(17,24,39,.06);
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      display:flex; align-items:center; justify-content:center;
       overflow:hidden;
       flex: 0 0 54px;
       border:1px solid rgba(17,24,39,.10);
@@ -91,24 +104,9 @@
     .name{
       font-weight:900; font-size:13px; color:#111827;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      display:flex; align-items:center; gap:8px;
     }
-    .tagOnline{
-      font-size:10px;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px solid rgba(16,185,129,.25);
-      background: rgba(16,185,129,.10);
-      color:#065f46;
-      font-weight:900;
-      letter-spacing:.5px;
-    }
-    .addr{ font-size:12px; color:rgba(17,24,39,.72); margin-top:3px; }
-    .row2{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;
-      font-size:12px; color:rgba(17,24,39,.75);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
+    .addr{ font-size:12px; color:rgba(17,24,39,.72); margin-top:3px; line-height:1.35; }
+    .dist{ font-size:12px; margin-top:6px; font-weight:900; color:rgba(17,24,39,.82); }
 
     #status{
       position:absolute; right:12px; top:12px; z-index:1000;
@@ -126,122 +124,8 @@
       white-space: nowrap;
     }
 
-    /* ===== Right Slide Panel (User View) ===== */
-    #rightPanel{
-      position:fixed;
-      top:0;
-      right:0;
-      height:100%;
-      width:min(420px, 92vw);
-      background: rgba(255,255,255,.96);
-      border-left:1px solid rgba(17,24,39,.12);
-      box-shadow: -18px 0 40px rgba(0,0,0,.12);
-      z-index:1200;
-      transform: translateX(105%);
-      transition: transform .25s ease;
-      backdrop-filter: blur(10px);
-      display:flex;
-      flex-direction:column;
-    }
-    #rightPanel.show{ transform: translateX(0); }
-
-    #rpHead{
-      padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px solid rgba(17,24,39,.10);
-    }
-    #rpTitle{
-      font-weight:900;
-      font-size:14px;
-      color:#111827;
-      line-height:1.2;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      flex:1;
-    }
-    #rpSub{
-      display:block;
-      font-size:12px;
-      opacity:.78;
-      font-weight:800;
-      margin-top:4px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 100%;
-    }
-    #rpClose{
-      border:none;
-      cursor:pointer;
-      border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
-      background:#111827;
-      color:#fff;
-      flex:0 0 auto;
-    }
-    #rpBody{
-      padding:12px;
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .card{
-      border:1px solid rgba(17,24,39,.10);
-      background:#fff;
-      border-radius:14px;
-      padding:12px;
-    }
-    .card h4{
-      margin:0 0 10px 0;
-      font-size:12px;
-      letter-spacing:.6px;
-      text-transform:uppercase;
-      color:rgba(17,24,39,.82);
-    }
-    .rpBtns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .rpBtn{
-      border:none; cursor:pointer; border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
-      font-size:12px;
-      background:#111827;
-      color:#fff;
-    }
-    .rpBtn.secondary{
-      background:#fff; color:#111827;
-      border:1px solid rgba(17,24,39,.14);
-    }
-
-    /* Chat */
-    #chatList{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-    .msg{
-      padding:10px;
-      border-radius:12px;
-      border:1px solid rgba(17,24,39,.10);
-      background: rgba(17,24,39,.03);
-      font-size:12px;
-      line-height:1.45;
-    }
-    .msg b{ display:block; font-size:11px; opacity:.75; margin-bottom:4px; }
-    textarea{
-      width:100%;
-      border:1px solid rgba(17,24,39,.14);
-      border-radius:12px;
-      padding:10px 10px;
-      outline:none;
-      font-weight:700;
-      font-size:13px;
-      background:#fff;
-      color:#111827;
-      min-height:80px;
-      resize:vertical;
+    @media (max-width:520px){
+      .chip input{ width:70px; }
     }
   </style>
 </head>
@@ -252,15 +136,25 @@
   <div id="panel-container">
     <div id="panel-inner">
       <div class="panel-head">
-        <div class="panel-title">Сервизи около теб</div>
-        <div class="pill" id="countPill"><span class="dot"></span><span id="countText">0</span></div>
+        <div class="panel-title" id="panelTitle">Сервизи около теб</div>
+        <div class="pill" id="countPill">0</div>
       </div>
 
       <div class="controls">
         <button class="btn" id="btnReload">Обнови</button>
-        <button class="btn secondary" id="btnMyLoc">Моето място</button>
-        <button class="btn secondary" id="btnToggleActive">Покажи активни</button>
+        <button class="btn secondary" id="btnAll">Всички</button>
+        <button class="btn secondary" id="btnNear">Около мен</button>
+
+        <div class="chip">
+          <small>Радиус</small>
+          <input id="radiusKm" type="number" min="1" max="80" step="1" value="10" />
+          <small>km</small>
+        </div>
+
+        <button class="btn secondary" id="btnLocate">Центрирай ме</button>
       </div>
+
+      <input class="search" id="q" placeholder="Търси по име/адрес…" />
 
       <div class="results" id="results"></div>
     </div>
@@ -269,46 +163,6 @@
   <div id="map"></div>
   <div id="status">Зареждам…</div>
 
-  <!-- Right panel -->
-  <aside id="rightPanel">
-    <div id="rpHead">
-      <div style="min-width:0;flex:1">
-        <div id="rpTitle">—</div>
-        <small id="rpSub">—</small>
-      </div>
-      <button id="rpClose">Затвори</button>
-    </div>
-
-    <div id="rpBody">
-      <div class="card">
-        <h4>Информация</h4>
-        <div id="baseInfo" style="font-size:12px;line-height:1.55;color:rgba(17,24,39,.82)"></div>
-        <div class="rpBtns">
-          <button class="rpBtn secondary" id="btnOpenGoogle">Отвори в Google</button>
-          <button class="rpBtn" id="btnCenter">Центрирай</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Профил (локално)</h4>
-        <div id="profileInfo" style="font-size:12px;line-height:1.6;color:rgba(17,24,39,.82);opacity:.95"></div>
-        <div style="margin-top:10px;font-size:11px;opacity:.75">
-          *Това идва от localStorage (от Business map). После го връзваме към Firestore.
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Чат (локално)</h4>
-        <textarea id="chatText" placeholder="Напиши съобщение към сервиза..."></textarea>
-        <div class="rpBtns">
-          <button class="rpBtn" id="btnSendChat">Изпрати</button>
-          <button class="rpBtn secondary" id="btnClearChat">Изчисти чат</button>
-        </div>
-        <div id="chatList"></div>
-      </div>
-    </div>
-  </aside>
-
   <script>
     "use strict";
 
@@ -316,40 +170,22 @@
     const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
     const AUTO_REFRESH_MS = 30 * 60 * 1000;
 
-    // Active services (от Business Access)
-    const ACTIVE_KEY = "sf_cs_activated_services";
-    let onlyActive = false;
-
-    function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
-    function normalizeCode(s){
-      return (s || "")
-        .trim()
-        .toUpperCase()
-        .replace(/\\s+/g,"-")
-        .replace(/[^A-Z0-9\\-]/g,"");
-    }
-
-    let activeMetaByCode = new Map();
-    function loadActiveMeta(){
-      activeMetaByCode.clear();
-      const arr = safeJson(localStorage.getItem(ACTIVE_KEY)) || [];
-      arr.forEach((a, idx) => {
-        const code = normalizeCode(a?.code || "");
-        if(!code) return;
-        activeMetaByCode.set(code, { ...a, _order: idx + 1 });
-      });
-    }
+    // fallback център (ако няма GPS)
+    const FALLBACK_CENTER = { lat: 42.6852, lng: 26.3293 }; // Сливен
 
     // ====== UI ======
     const panel = document.getElementById("panel-container");
     const resultsEl = document.getElementById("results");
     const statusEl = document.getElementById("status");
     const countPill = document.getElementById("countPill");
-    const countText = document.getElementById("countText");
+    const panelTitleEl = document.getElementById("panelTitle");
 
     const btnReload = document.getElementById("btnReload");
-    const btnMyLoc = document.getElementById("btnMyLoc");
-    const btnToggleActive = document.getElementById("btnToggleActive");
+    const btnAll = document.getElementById("btnAll");
+    const btnNear = document.getElementById("btnNear");
+    const btnLocate = document.getElementById("btnLocate");
+    const radiusKmEl = document.getElementById("radiusKm");
+    const qEl = document.getElementById("q");
 
     document.getElementById("menu-button").addEventListener("click", () => {
       panel.style.display = (panel.style.display === "none") ? "block" : "none";
@@ -359,23 +195,20 @@
 
     // ====== MAP ======
     let map, info;
-    let markersByCode = new Map();
     let markers = [];
+    let markersByCode = new Map();
     let lastData = [];
 
-    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
-
-    // user location
-    const USER_LOC_KEY = "sf_cs_user_loc";
-    let userLoc = null;
+    let userPos = null;
     let userMarker = null;
+    let userLabel = ""; // град/област (ако се извади)
+
+    let viewMode = "near"; // "near" | "all"
 
     function initMap(){
-      loadActiveMeta();
-
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 12,
-        center: SLIVEN_CENTER,
+        center: FALLBACK_CENTER,
         mapTypeControl: true,
         mapTypeControlOptions: {
           style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
@@ -385,96 +218,108 @@
 
       info = new google.maps.InfoWindow();
 
-      wireRightPanel();
+      // първо: вземи GPS и центрирай
+      locateUser(true);
 
-      // 1) центрирай по user (град/област = реалния GPS район)
-      centerToUserArea(true).finally(() => {
-        // 2) после зареждаме данните
-        loadAndRender(true);
-        setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
-      });
+      // зареди TXT
+      loadAndRender(true);
+      setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
 
+      // UI
       btnReload.addEventListener("click", () => loadAndRender(false));
-      btnMyLoc.addEventListener("click", () => centerToUserArea(false));
-
-      btnToggleActive.addEventListener("click", () => {
-        onlyActive = !onlyActive;
-        btnToggleActive.textContent = onlyActive ? "Покажи всички" : "Покажи активни";
-        applyView(lastData);
-      });
-
-      // ако в друг таб стане new activation -> refresh
-      window.addEventListener("storage", (e) => {
-        if(e.key === ACTIVE_KEY){
-          loadActiveMeta();
-          applyView(lastData);
-        }
-      });
+      btnAll.addEventListener("click", () => { viewMode = "all"; applyView(lastData); });
+      btnNear.addEventListener("click", () => { viewMode = "near"; applyView(lastData); });
+      btnLocate.addEventListener("click", () => locateUser(true));
+      radiusKmEl.addEventListener("change", () => applyView(lastData));
+      qEl.addEventListener("input", () => applyView(lastData));
     }
     window.initMap = initMap;
 
-    async function centerToUserArea(firstTime){
-      // ако имаме последно запазено местоположение - центрираме бързо
-      const cached = safeJson(localStorage.getItem(USER_LOC_KEY));
-      if(cached?.lat && cached?.lng && firstTime){
-        userLoc = { lat: Number(cached.lat), lng: Number(cached.lng) };
-        placeUserMarker(userLoc);
-        map.setCenter(userLoc);
-        map.setZoom(12);
-        setStatus("OK: последно място (запазено).");
-      }
-
+    // ====== LOCATION ======
+    function locateUser(center){
       if(!navigator.geolocation){
-        setStatus("GPS не се поддържа. Център: Сливен.");
+        setStatus("GPS не се поддържа от браузъра. Ползвам fallback център.");
         return;
       }
 
-      setStatus("Искам GPS… (разреши Location)");
-      return new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            try{ localStorage.setItem(USER_LOC_KEY, JSON.stringify(userLoc)); }catch(_){}
-            placeUserMarker(userLoc);
-            map.setCenter(userLoc);
-            map.setZoom(12);
-            setStatus("OK: центрирах по твоя район.");
-            resolve();
-          },
-          (err) => {
-            // fallback
-            setStatus("Без GPS → център: Сливен. (" + (err?.message || "deny") + ")");
-            map.setCenter(SLIVEN_CENTER);
-            map.setZoom(12);
-            resolve();
-          },
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 }
-        );
+      setStatus("Искам GPS… (Allow)");
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+        // user marker
+        if(userMarker) userMarker.setMap(null);
+        userMarker = new google.maps.Marker({
+          position: userPos,
+          map,
+          title: "Ти си тук",
+          label: { text: "YOU", fontSize:"10px", fontWeight:"900", color:"#111", className:"marker-label" }
+        });
+
+        if(center){
+          map.setCenter(userPos);
+          map.setZoom(13);
+        }
+
+        // опит за град/област (без Places; това е Geocoder от Maps JS)
+        userLabel = "";
+        try{
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ location: userPos }, (res, status) => {
+            if(status === "OK" && res && res[0]){
+              const comp = res[0].address_components || [];
+              const get = (type) => (comp.find(c => (c.types||[]).includes(type))?.long_name) || "";
+              const city = get("locality") || get("administrative_area_level_2") || "";
+              const oblast = get("administrative_area_level_1") || "";
+              userLabel = [city, oblast].filter(Boolean).join(", ");
+              applyTitle();
+            }
+          });
+        }catch(_){}
+
+        applyTitle();
+        applyView(lastData);
+        setStatus("GPS OK" + (userLabel ? " • " + userLabel : ""));
+      }, (err) => {
+        console.warn(err);
+        setStatus("Няма GPS достъп. Ползвам fallback център (Сливен).");
+        userPos = null;
+        applyTitle();
+        applyView(lastData);
+      }, {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 30000
       });
     }
 
-    function placeUserMarker(loc){
-      if(!loc) return;
-      if(userMarker) userMarker.setMap(null);
-      userMarker = new google.maps.Marker({
-        position: loc,
-        map,
-        title: "Ти си тук",
-        label: { text: "ME", fontSize:"11px", fontWeight:"900", color:"#111", className:"marker-label" }
-      });
+    function applyTitle(){
+      if(viewMode === "near"){
+        panelTitleEl.textContent = "Сервизи около теб" + (userLabel ? (" • " + userLabel) : "");
+      } else {
+        panelTitleEl.textContent = "Всички сервизи от TXT";
+      }
     }
 
     // ====== TXT LOADING ======
     async function fetchTxt(url){
-      // cache-bust: никога стар TXT на Vercel
-      const res = await fetch(url + "?v=" + Date.now(), { cache: "no-store" });
-      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери дали е в /public/QR_serveses/.");
+      // v=Date.now() убива edge cache без Ctrl+F5
+      const u = url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+      const res = await fetch(u, { cache: "no-store" });
+      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери /public/QR_serveses/.");
       return await res.text();
+    }
+
+    function normalizeCode(s){
+      return (s || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g,"-")
+        .replace(/[^A-Z0-9\-]/g,"");
     }
 
     function parseTxt(txt){
       const lines = String(txt || "")
-        .split(/\\r?\\n/)
+        .split(/\r?\n/)
         .map(l => l.trim())
         .filter(l => l && !l.startsWith("#"));
 
@@ -488,53 +333,57 @@
         const addr = parts[2] || "";
         const lat = Number(String(parts[3]).replace(",", "."));
         const lng = Number(String(parts[4]).replace(",", "."));
-        const source = parts.slice(5).join(" | ").trim();
 
         if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, source, raw: line });
+        out.push({ code, name, addr, lat, lng, raw: line });
       }
       return out;
     }
 
-    // ====== RENDER ======
+    // ====== HELPERS ======
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function haversineKm(a, b){
+      const R = 6371;
+      const toRad = (x) => x * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const s1 = Math.sin(dLat/2), s2 = Math.sin(dLng/2);
+      const q = s1*s1 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*s2*s2;
+      return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
+    }
+
     function clearMarkers(){
       for(const m of markers) m.setMap(null);
       markers = [];
       markersByCode.clear();
     }
 
-    function fitAll(){
-      const pins = markers.slice();
-      if(userMarker) pins.push(userMarker);
-
-      if(!pins.length){
-        map.setCenter(SLIVEN_CENTER);
-        map.setZoom(12);
+    function fitRows(rows){
+      if(!rows.length){
+        if(userPos){ map.setCenter(userPos); map.setZoom(13); }
+        else { map.setCenter(FALLBACK_CENTER); map.setZoom(12); }
         return;
       }
       const bounds = new google.maps.LatLngBounds();
-      pins.forEach(m => bounds.extend(m.getPosition()));
+      rows.forEach(r => bounds.extend({lat:r.lat, lng:r.lng}));
+      if(userPos) bounds.extend(userPos);
       map.fitBounds(bounds, 70);
     }
 
-    function escapeHtml(str){
-      return String(str).replace(/[&<>\"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\\\"":"&quot;","'":"&#039;"
-      }[m] || m));
-    }
-
+    // ====== RENDER ======
     function markerHtml(row){
       const mapsLink = `https://www.google.com/maps/search/?api=1&query=${row.lat},${row.lng}`;
-      const meta = activeMetaByCode.get(normalizeCode(row.code||""));
-      const online = meta ? "ONLINE ✅" : "OFFLINE";
-
       return `
         <div style="font-family:Arial;max-width:290px">
           <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(row.name)}</div>
           <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
             ${row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br/>` : ""}
-            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}<br/>
-            <b>Статус:</b> ${online}
+            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
             <a href="${mapsLink}" target="_blank" rel="noopener"
@@ -544,53 +393,16 @@
       `;
     }
 
-    function renderList(rows){
-      resultsEl.innerHTML = "";
-      countText.textContent = String(rows.length);
-
-      if(!rows.length){
-        resultsEl.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.75">
-          Няма резултати за текущия изглед.
-        </div>`;
-        return;
-      }
-
-      rows.forEach((r) => {
-        const codeKey = normalizeCode(r.code||"");
-        const meta = activeMetaByCode.get(codeKey);
-        const onlineTag = meta ? `<span class="tagOnline">ONLINE</span>` : "";
-
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div class="badge">${meta ? "✅" : "•"}</div>
-          <div class="meta">
-            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)} ${onlineTag}</div>
-            <div class="addr">
-              ${r.addr ? escapeHtml(r.addr) + " • " : ""}
-              ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}
-            </div>
-            <div class="row2">Код: ${escapeHtml(r.code)}</div>
-          </div>
-        `;
-        el.addEventListener("click", () => focusRow(r.code, true));
-        resultsEl.appendChild(el);
-      });
-    }
-
     function renderPins(rows){
       clearMarkers();
 
       rows.forEach((r, idx) => {
-        const meta = activeMetaByCode.get(normalizeCode(r.code||""));
-        const labelText = meta ? String(idx + 1) : "•";
-
         const mk = new google.maps.Marker({
           position: { lat: r.lat, lng: r.lng },
           map,
           title: r.name,
           label: {
-            text: String(labelText),
+            text: String(idx + 1),
             fontSize: "11px",
             fontWeight: "800",
             color: "#111",
@@ -601,7 +413,6 @@
         mk.addListener("click", () => {
           info.setContent(markerHtml(r));
           info.open({ map, anchor: mk });
-          openRightPanel(r);
         });
 
         markers.push(mk);
@@ -609,36 +420,69 @@
       });
     }
 
-    function focusRow(code, openPanel){
-      const key = normalizeCode(code||"");
-      const hit = markersByCode.get(key);
-      if(!hit){
-        setStatus("Няма такъв запис в текущия изглед.");
+    function renderList(rows){
+      resultsEl.innerHTML = "";
+      countPill.textContent = String(rows.length);
+
+      if(!rows.length){
+        resultsEl.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.75">
+          Няма резултати за този филтър.
+        </div>`;
         return;
       }
-      const { row, marker } = hit;
-      map.panTo({ lat: row.lat, lng: row.lng });
-      map.setZoom(16);
-      google.maps.event.trigger(marker, "click");
-      setStatus("OK: " + row.name);
-      if(openPanel) openRightPanel(row);
+
+      rows.forEach((r, i) => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="badge">${i+1}</div>
+          <div class="meta">
+            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
+            <div class="addr">${r.addr ? escapeHtml(r.addr) + "<br>" : ""}${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}</div>
+            ${typeof r._km === "number" ? `<div class="dist">≈ ${r._km.toFixed(1)} km</div>` : ""}
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          map.panTo({ lat: r.lat, lng: r.lng });
+          map.setZoom(16);
+          const hit = markersByCode.get(normalizeCode(r.code||""));
+          if(hit) google.maps.event.trigger(hit.marker, "click");
+        });
+        resultsEl.appendChild(el);
+      });
     }
 
     function applyView(allRows){
-      lastData = allRows;
+      lastData = allRows || [];
+      applyTitle();
 
-      // filter: onlyActive
-      const rows = onlyActive
-        ? allRows.filter(r => activeMetaByCode.has(normalizeCode(r.code||"")))
-        : allRows;
+      const q = (qEl.value || "").trim().toLowerCase();
+      let rows = [...lastData];
+
+      if(q){
+        rows = rows.filter(r =>
+          (r.name||"").toLowerCase().includes(q) ||
+          (r.addr||"").toLowerCase().includes(q) ||
+          (r.code||"").toLowerCase().includes(q)
+        );
+      }
+
+      if(viewMode === "near" && userPos){
+        const radiusKm = Math.max(1, Math.min(80, Number(radiusKmEl.value || 10)));
+        rows = rows
+          .map(r => ({ ...r, _km: haversineKm(userPos, {lat:r.lat, lng:r.lng}) }))
+          .filter(r => r._km <= radiusKm)
+          .sort((a,b) => a._km - b._km);
+        setStatus(`OK: ${rows.length} сервиза в ${radiusKm} km` + (userLabel ? ` • ${userLabel}` : ""));
+      } else if(viewMode === "near" && !userPos){
+        setStatus("Няма GPS → показвам всички (fallback). Натисни 'Центрирай ме'.");
+      } else {
+        setStatus(`OK: ${rows.length} сервиза от TXT`);
+      }
 
       renderPins(rows);
       renderList(rows);
-
-      setStatus(`OK: ${rows.length} сервиза.`);
-
-      // при първо зареждане – ако имаме userLoc, не центрирай към Сливен, а към района
-      fitAll();
+      fitRows(rows);
     }
 
     async function loadAndRender(first){
@@ -646,170 +490,37 @@
         setStatus(first ? "Зареждам TXT…" : "Обновявам…");
         const txt = await fetchTxt(DATA_URL);
         const rows = parseTxt(txt);
-
-        loadActiveMeta();
         applyView(rows);
-
       }catch(err){
         console.error(err);
         setStatus("Грешка: " + (err?.message || err));
       }
     }
-
-    // ===== Right Panel (USER) =====
-    const rp = document.getElementById("rightPanel");
-    const rpClose = document.getElementById("rpClose");
-    const rpTitle = document.getElementById("rpTitle");
-    const rpSub = document.getElementById("rpSub");
-    const baseInfo = document.getElementById("baseInfo");
-    const profileInfo = document.getElementById("profileInfo");
-    const btnOpenGoogle = document.getElementById("btnOpenGoogle");
-    const btnCenter = document.getElementById("btnCenter");
-
-    const chatText = document.getElementById("chatText");
-    const btnSendChat = document.getElementById("btnSendChat");
-    const btnClearChat = document.getElementById("btnClearChat");
-    const chatList = document.getElementById("chatList");
-
-    let currentRow = null;
-
-    function wireRightPanel(){
-      rpClose.addEventListener("click", () => rp.classList.remove("show"));
-      btnCenter.addEventListener("click", () => {
-        if(!currentRow) return;
-        map.panTo({lat: currentRow.lat, lng: currentRow.lng});
-        map.setZoom(16);
-      });
-      btnOpenGoogle.addEventListener("click", () => {
-        if(!currentRow) return;
-        const url = `https://www.google.com/maps/search/?api=1&query=${currentRow.lat},${currentRow.lng}`;
-        window.open(url, "_blank", "noopener");
-      });
-
-      btnSendChat.addEventListener("click", () => {
-        if(!currentRow) return;
-        const t = chatText.value.trim();
-        if(!t) return;
-        pushChat(currentRow.code, { from:"USER", text:t, ts:new Date().toISOString() });
-        chatText.value = "";
-        renderChat(currentRow.code);
-      });
-
-      btnClearChat.addEventListener("click", () => {
-        if(!currentRow) return;
-        clearChat(currentRow.code);
-        renderChat(currentRow.code);
-      });
-
-      window.addEventListener("storage", (e) => {
-        if(!currentRow) return;
-        if(e.key && (e.key === "sf_cs_biz_profiles" || e.key.startsWith("sf_cs_chat_"))){
-          loadProfileIntoUI(currentRow.code);
-          renderChat(currentRow.code);
-        }
-      });
-    }
-
-    function openRightPanel(row){
-      currentRow = row;
-
-      const meta = activeMetaByCode.get(normalizeCode(row.code||""));
-      const status = meta ? "ONLINE ✅" : "OFFLINE";
-
-      rpTitle.textContent = row.name || "—";
-      rpSub.textContent = status;
-
-      baseInfo.innerHTML =
-        `<b>Име:</b> ${escapeHtml(row.name)}<br>` +
-        (row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br>` : "") +
-        `<b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}<br>` +
-        `<b>Статус:</b> ${escapeHtml(status)}<br>`;
-
-      loadProfileIntoUI(row.code);
-      renderChat(row.code);
-      rp.classList.add("show");
-    }
-
-    function getProfiles(){ return safeJson(localStorage.getItem("sf_cs_biz_profiles")) || {}; }
-
-    function loadProfileIntoUI(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      const p = all[key] || {};
-
-      const phone = p.phone ? escapeHtml(p.phone) : "—";
-      const hours = p.hours ? escapeHtml(p.hours) : "—";
-      const services = p.services ? escapeHtml(p.services) : "—";
-      const desc = p.desc ? escapeHtml(p.desc) : "—";
-
-      profileInfo.innerHTML =
-        `<b>Телефон:</b> ${phone}<br>` +
-        `<b>Работно време:</b> ${hours}<br>` +
-        `<b>Услуги:</b> ${services}<br>` +
-        `<b>Описание:</b> ${desc}<br>`;
-    }
-
-    function chatKey(code){ return "sf_cs_chat_" + normalizeCode(code); }
-    function getChat(code){ return safeJson(localStorage.getItem(chatKey(code))) || []; }
-    function pushChat(code, msg){
-      const arr = getChat(code);
-      arr.push(msg);
-      localStorage.setItem(chatKey(code), JSON.stringify(arr.slice(-80)));
-    }
-    function clearChat(code){ localStorage.removeItem(chatKey(code)); }
-    function renderChat(code){
-      const arr = getChat(code);
-      chatList.innerHTML = "";
-      if(!arr.length){
-        chatList.innerHTML = `<div style="font-size:12px;opacity:.7">Няма съобщения (локално).</div>`;
-        return;
-      }
-      arr.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "msg";
-        const ts = m.ts ? new Date(m.ts) : new Date();
-        div.innerHTML = `<b>${escapeHtml(m.from || "—")} • ${escapeHtml(ts.toLocaleString())}</b>${escapeHtml(m.text || "")}`;
-        chatList.appendChild(div);
-      });
-      chatList.scrollTop = chatList.scrollHeight;
-    }
   </script>
 
-  <!-- ✅ Google Maps Loader (без places) + cache-bust -->
+  <!-- ✅ SAFE Google Maps Loader (без async/places, без Ctrl+F5) -->
   <script>
-    (function(){
+    (function loadGoogleMapsSafely(){
+      const KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ"; // <-- твоя key
+
+      const cb = "__sfMapsCb_" + Math.random().toString(36).slice(2);
+      window[cb] = function(){
+        try { delete window[cb]; } catch(e){}
+        if (typeof window.initMap === "function") window.initMap();
+      };
+
       const s = document.createElement("script");
-      s.defer = true;
-      s.src = "https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&callback=initMap&loading=async&v=" + Date.now();
+      s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(KEY) +
+              "&callback=" + encodeURIComponent(cb) +
+              "&v=" + Date.now(); // cache-bust
+      s.async = false;
+      s.onerror = () => {
+        const st = document.getElementById("status");
+        if(st) st.textContent = "Грешка: Google Maps не се зареди.";
+        console.error("Google Maps load failed");
+      };
       document.head.appendChild(s);
     })();
   </script>
-
-
-<script>
-  (function loadGoogleMapsSafely(){
-    // СЛОЖИ ТУК ТВОЯ KEY
-    const KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ";
-
-    // уникален callback, за да няма конфликт и да няма “стар” initMap
-    const cb = "__sfMapsCb_" + Math.random().toString(36).slice(2);
-
-    window[cb] = function(){
-      try { delete window[cb]; } catch(e){}
-      if (typeof window.initMap === "function") window.initMap();
-    };
-
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${KEY}&callback=${cb}&v=${Date.now()}`;
-    s.async = false;            // 🔥 важно: НЕ async
-    s.onerror = () => {
-      const st = document.getElementById("status");
-      if(st) st.textContent = "Грешка: Google Maps не се зареди.";
-      console.error("Google Maps load failed");
-    };
-    document.head.appendChild(s);
-  })();
-</script>
-
 </body>
 </html>
