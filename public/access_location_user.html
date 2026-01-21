@@ -803,10 +803,11 @@
         });
       }
 
-      if(doSearch){
-        lastMode = "places";
-        searchAutoServices(lat, lng);
-      }
+if(doSearch){
+  lastMode = "txt";
+  loadTxtAndRender(true);
+}
+
     }
 
     // ====== PLACES API (Nearby car_repair) ======
