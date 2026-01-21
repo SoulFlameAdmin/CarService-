@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SoulFlame CarService — Map (User)</title>
+  <title>SoulFlame CarService — Map (User • World)</title>
 
   <style>
     html, body { margin:0; padding:0; height:100%; font-family: Arial, sans-serif; }
@@ -17,8 +17,8 @@
     }
 
     #panel-container{
-      position:absolute; top:60px; left:15px; width:min(380px, 92vw);
-      max-height: 72vh; overflow:hidden;
+      position:absolute; top:60px; left:15px; width:min(420px, 92vw);
+      max-height:72vh; overflow:hidden;
       z-index:999; border-radius:14px;
       background: rgba(255,255,255,.94);
       backdrop-filter: blur(10px);
@@ -36,7 +36,7 @@
       font-weight:900;
     }
 
-    .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .controls{ display:flex; gap:8px; flex-wrap:wrap; }
     .btn{
       border:none; cursor:pointer; border-radius:12px;
       padding:10px 12px; font-weight:900; font-size:12px; letter-spacing:.6px;
@@ -47,37 +47,30 @@
       border:1px solid rgba(17,24,39,.14);
     }
 
-    .row{
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    .controls2{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      border:1px solid rgba(17,24,39,.10);
+      background: rgba(17,24,39,.03);
+      border-radius:14px;
+      padding:10px;
     }
-    .chip{
-      font-size:12px; padding:8px 10px; border-radius:999px;
-      border:1px solid rgba(17,24,39,.12);
-      background:#fff; color:#111827;
-      font-weight:900;
-      display:flex; gap:8px; align-items:center;
-    }
-    .chip input{
-      width:84px; border:none; outline:none; font-weight:900;
-      background:transparent;
-    }
-    .chip small{ opacity:.7; font-weight:900; }
-
-    .search{
-      width:100%;
+    .select, .input{
       border:1px solid rgba(17,24,39,.14);
-      border-radius:12px;
-      padding:10px 10px;
-      outline:none;
-      font-weight:900;
-      font-size:13px;
       background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:900;
+      font-size:12px;
       color:#111827;
+      outline:none;
+      width: 100%;
     }
+    .input{ font-weight:800; }
+    .controls2 > *{ flex:1; min-width: 140px; }
 
     .results{
       overflow:auto;
-      max-height: calc(72vh - 260px);
+      max-height: calc(72vh - 285px);
       padding-right:4px;
     }
 
@@ -89,15 +82,52 @@
     }
 
     .badge{
-      min-width:54px; width:54px; height:54px;
-      border-radius:16px;
-      background: rgba(17,24,39,.06);
-      display:flex; align-items:center; justify-content:center;
+      min-width:44px; height:34px; border-radius:12px;
+      background: rgba(17,24,39,.08);
+      display:grid; place-items:center;
+      font-weight:900;
+      padding:0 8px;
+      font-size:11px;
+      color:#111827;
       overflow:hidden;
-      flex: 0 0 54px;
+    }
+
+    /* SoulFlame Active style */
+    .sfHeader{
+      display:flex; align-items:center; justify-content:space-between;
+      margin:6px 0 10px;
+      padding:8px 10px;
       border:1px solid rgba(17,24,39,.10);
+      border-radius:14px;
+      background: rgba(17,24,39,.04);
       font-weight:900;
       color:#111827;
+      font-size:12px;
+      letter-spacing:.4px;
+    }
+    .sfTag{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(17,24,39,.12);
+      background:#fff;
+      font-weight:900;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .item.sfActive{
+      border-color: rgba(16,185,129,.22);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+    }
+    .badge.sf{
+      background: rgba(16,185,129,.12);
+      border:1px solid rgba(16,185,129,.18);
+    }
+    .sfMini{
+      font-size:11px;
+      font-weight:900;
+      color: rgba(17,24,39,.72);
     }
 
     .meta{ flex:1; min-width:0; }
@@ -105,27 +135,58 @@
       font-weight:900; font-size:13px; color:#111827;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .addr{ font-size:12px; color:rgba(17,24,39,.72); margin-top:3px; line-height:1.35; }
-    .dist{ font-size:12px; margin-top:6px; font-weight:900; color:rgba(17,24,39,.82); }
+    .addr{ font-size:12px; color:rgba(17,24,39,.72); margin-top:3px; }
+    .row2{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:12px; color:rgba(17,24,39,.75); }
+    .link{ color:#0b62ff; text-decoration:none; font-weight:900; }
 
     #status{
       position:absolute; right:12px; top:12px; z-index:1000;
       background:rgba(17,24,39,.88); color:#fff;
       padding:8px 10px; border-radius:10px; font-size:12px;
       box-shadow:0 10px 26px rgba(0,0,0,.18);
-      max-width:min(520px, 92vw);
+      max-width:min(560px, 92vw);
+      white-space: pre-wrap;
     }
 
-    .marker-label {
-      background: rgba(255,255,255,0.92);
+    /* “Търси в този район” */
+    #search-area{
+      position:absolute; top:14px; left:50%; transform:translateX(-50%);
+      z-index:1000;
+      background:#fff;
+      border:1px solid rgba(17,24,39,.14);
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:900;
+      cursor:pointer;
+      display:none;
+      box-shadow:0 10px 26px rgba(0,0,0,.14);
+    }
+    #search-area.show{ display:block; }
+
+    .marker-label{
+      background: rgba(255,255,255,0.9);
       padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.15);
       white-space: nowrap;
     }
 
+    /* User strip */
+    .userStrip{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:10px;
+      border:1px solid rgba(17,24,39,.10);
+      border-radius:14px;
+      background: rgba(255,255,255,.90);
+    }
+    .uImg{ width:32px; height:32px; border-radius:12px; object-fit:cover; border:1px solid rgba(17,24,39,.12); }
+    .uMeta{ min-width:0; flex:1; }
+    .uName{ font-weight:900; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#111827; }
+    .uMail{ font-size:12px; opacity:.72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#111827; }
+
     @media (max-width:520px){
-      .chip input{ width:70px; }
+      #panel-container{ width:min(420px, 92vw); }
+      .controls2 > *{ min-width: 100%; }
     }
   </style>
 </head>
@@ -135,57 +196,112 @@
 
   <div id="panel-container">
     <div id="panel-inner">
+      <!-- USER INFO -->
+      <div class="userStrip" id="userStrip" style="display:none">
+        <img class="uImg" id="uImg" alt="User"/>
+        <div class="uMeta">
+          <div class="uName" id="uName">—</div>
+          <div class="uMail" id="uMail">—</div>
+        </div>
+        <button class="btn secondary" id="btnLogout" type="button">Изход</button>
+      </div>
+
       <div class="panel-head">
-        <div class="panel-title" id="panelTitle">Сервизи около теб</div>
+        <div class="panel-title" id="panelTitle">Auto services near you</div>
         <div class="pill" id="countPill">0</div>
       </div>
 
       <div class="controls">
-        <button class="btn" id="btnReload">Обнови</button>
-        <button class="btn secondary" id="btnAll">Всички</button>
-        <button class="btn secondary" id="btnNear">Около мен</button>
-
-        <div class="chip">
-          <small>Радиус</small>
-          <input id="radiusKm" type="number" min="1" max="80" step="1" value="10" />
-          <small>km</small>
-        </div>
-
-        <button class="btn secondary" id="btnLocate">Центрирай ме</button>
+        <button class="btn" id="btnRefresh">Search</button>
+        <button class="btn secondary" id="btnNearMe">Near me</button>
+        <button class="btn secondary" id="btnSF">SF Active</button>
+        <button class="btn secondary" id="btnUseTxt">TXT</button>
       </div>
 
-      <input class="search" id="q" placeholder="Търси по име/адрес…" />
+      <!-- World filters -->
+      <div class="controls2">
+        <select class="select" id="typeSelect" title="Type">
+          <option value="car_repair" selected>car_repair (default)</option>
+          <option value="gas_station">gas_station</option>
+          <option value="car_wash">car_wash</option>
+          <option value="tire_shop">tire_shop (if supported)</option>
+        </select>
 
-      <div class="results" id="results"></div>
+        <select class="select" id="radiusSelect" title="Radius">
+          <option value="1500">1.5 km</option>
+          <option value="3000">3 km</option>
+          <option value="8000" selected>8 km</option>
+          <option value="15000">15 km</option>
+          <option value="30000">30 km</option>
+        </select>
+
+        <input class="input" id="queryInput" placeholder="Optional text (e.g. BMW, Bosch, garage)"/>
+      </div>
+
+      <!-- Active(SF) + Main(Google/TXT) -->
+      <div class="results" id="results">
+        <div id="sfActiveWrap" style="display:none"></div>
+        <div id="mainResults"></div>
+      </div>
     </div>
   </div>
 
+  <button id="search-area">Search this area</button>
+
   <div id="map"></div>
-  <div id="status">Зареждам…</div>
+  <div id="status">Loading…</div>
 
-  <script>
-    "use strict";
+  <script type="module">
+    // ==========================================================
+    // ✅ MAP USER • WORLD
+    // - Works with:
+    //   - Google Places API (new) (searchNearby)
+    //   - Firestore "businesses" isActive==true (SF Active)
+    //   - TXT fallback (optional)
+    // - Preview mode:
+    //   - localStorage SF_PREVIEW=1 OR URL ?preview=1 => no auth required
+    // ==========================================================
 
-    // ====== CONFIG ======
-    const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
+    // ====== CONFIG (no hardcode key) ======
+    import { SF_GOOGLE_MAPS_KEY } from "./googlelogin/config.js";
+
+    // Places Nearby defaults (can be overridden by UI)
+    const MAX_RESULTS = 30;
     const AUTO_REFRESH_MS = 30 * 60 * 1000;
 
-    // fallback център (ако няма GPS)
-    const FALLBACK_CENTER = { lat: 42.6852, lng: 26.3293 }; // Сливен
+    // TXT fallback:
+    // Option A: one file
+    // const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
+    // Option B (world-ready): by city/country param:
+    // /QR_serveses/world/<COUNTRY>/<CITY>.txt
+    const TXT_WORLD_TEMPLATE = "/QR_serveses/world/{CC}/{CITY}.txt";
+
+    // Fallback center (only if geo denied AND no saved location)
+    const DEFAULT_CENTER = { lat: 42.6852, lng: 26.3293 }; // Sliven as safe default
 
     // ====== UI ======
     const panel = document.getElementById("panel-container");
-    const resultsEl = document.getElementById("results");
+    const sfActiveWrap = document.getElementById("sfActiveWrap");
+    const resultsEl = document.getElementById("mainResults");
     const statusEl = document.getElementById("status");
     const countPill = document.getElementById("countPill");
-    const panelTitleEl = document.getElementById("panelTitle");
+    const panelTitle = document.getElementById("panelTitle");
 
-    const btnReload = document.getElementById("btnReload");
-    const btnAll = document.getElementById("btnAll");
-    const btnNear = document.getElementById("btnNear");
-    const btnLocate = document.getElementById("btnLocate");
-    const radiusKmEl = document.getElementById("radiusKm");
-    const qEl = document.getElementById("q");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnNearMe = document.getElementById("btnNearMe");
+    const btnUseTxt = document.getElementById("btnUseTxt");
+    const btnSF = document.getElementById("btnSF");
+    const searchAreaBtn = document.getElementById("search-area");
+
+    const typeSelect = document.getElementById("typeSelect");
+    const radiusSelect = document.getElementById("radiusSelect");
+    const queryInput = document.getElementById("queryInput");
+
+    const userStrip = document.getElementById("userStrip");
+    const uImg = document.getElementById("uImg");
+    const uName = document.getElementById("uName");
+    const uMail = document.getElementById("uMail");
+    const btnLogout = document.getElementById("btnLogout");
 
     document.getElementById("menu-button").addEventListener("click", () => {
       panel.style.display = (panel.style.display === "none") ? "block" : "none";
@@ -193,22 +309,711 @@
 
     function setStatus(t){ statusEl.textContent = t; }
 
-    // ====== MAP ======
-    let map, info;
-    let markers = [];
+    // ====== utils ======
+    function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+    function normalizePhoneForTel(phone){
+      const p = String(phone || "").trim();
+      if(!p) return "";
+      return p.replace(/[^0-9+]/g, "");
+    }
+    function approxKm(lat1,lng1,lat2,lng2){
+      const kx = 111.32;
+      const ky = 111.32 * Math.cos((lat1*Math.PI)/180);
+      const dx = (lat2-lat1) * kx;
+      const dy = (lng2-lng1) * ky;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+    function isPreview(){
+      const url = new URL(window.location.href);
+      return url.searchParams.get("preview") === "1" || localStorage.getItem("SF_PREVIEW") === "1";
+    }
+    function getLang2(){
+      const lang = (navigator.language || "en").toLowerCase();
+      // Places expects languageCode like "en" "bg" "de" etc.
+      return lang.split("-")[0] || "en";
+    }
+    function getRegion2(){
+      // optional: use browser locale region if present (bg-BG => BG)
+      // NOTE: For world mode we DO NOT force BG.
+      const lang = (navigator.language || "").split("-");
+      return (lang[1] && lang[1].length === 2) ? lang[1].toUpperCase() : null;
+    }
+
+    // ====== localStorage: location ======
+    function getSavedLocation(){
+      try { return JSON.parse(localStorage.getItem("sf_cs_location") || "null"); }
+      catch(e){ return null; }
+    }
+    function saveLocalLocation(mode, lat, lng, accuracy, source){
+      localStorage.setItem("sf_cs_location", JSON.stringify({
+        mode, lat, lng,
+        accuracy_m: accuracy ?? null,
+        ts: new Date().toISOString(),
+        source: source || "map"
+      }));
+    }
+
+    // ====== Firebase (optional, auto) ======
+    import { auth, db, firebaseEnabled } from "./googlelogin/firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    import {
+      doc, getDoc, setDoc, serverTimestamp,
+      collection, query, where, onSnapshot,
+      orderBy, limit
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    async function upsertUserProfile(user){
+      if(!firebaseEnabled || !db || !user) return;
+      await setDoc(doc(db, "users", user.uid), {
+        profile: {
+          uid: user.uid,
+          email: user.email || null,
+          displayName: user.displayName || null,
+          photoURL: user.photoURL || null,
+          providerId: (user.providerData?.[0]?.providerId) || "google",
+          lastLoginAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        },
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    function throttle(fn, waitMs){
+      let last = 0;
+      let timer = null;
+      let lastArgs = null;
+      return (...args) => {
+        const now = Date.now();
+        lastArgs = args;
+        if(now - last >= waitMs){
+          last = now;
+          fn(...args);
+        }else{
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            last = Date.now();
+            fn(...lastArgs);
+          }, waitMs - (now - last));
+        }
+      };
+    }
+
+    const writeLastLocationThrottled = throttle(async (uid, loc) => {
+      if(!firebaseEnabled || !db || !uid || !loc) return;
+      try{
+        await setDoc(doc(db, "users", uid), {
+          lastLocation: loc,
+          lastLocationAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }catch(e){ console.warn(e); }
+    }, 5000);
+
+    async function readLastLocationFromFirestore(uid){
+      if(!firebaseEnabled || !db || !uid) return null;
+      try{
+        const snap = await getDoc(doc(db, "users", uid));
+        if(!snap.exists()) return null;
+        const data = snap.data();
+        const loc = data?.lastLocation || null;
+        if(loc && typeof loc.lat === "number" && typeof loc.lng === "number") return loc;
+        return null;
+      }catch(e){
+        console.warn(e);
+        return null;
+      }
+    }
+
+    function showUser(user){
+      userStrip.style.display = "flex";
+      uImg.src = user.photoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='18' fill='%23ffffff'/%3E%3Cpath d='M40 41c9 0 16-7 16-16S49 9 40 9 24 16 24 25s7 16 16 16zm0 6c-13 0-24 7-24 16v4h48v-4c0-9-11-16-24-16z' fill='%230b0b0d' fill-opacity='.55'/%3E%3C/svg%3E";
+      uName.textContent = user.displayName || "User";
+      uMail.textContent = user.email || "";
+    }
+
+    // ====== Map (Google JS) dynamic loader ======
+    function loadGoogleMaps(key){
+      return new Promise((resolve, reject) => {
+        if(window.google?.maps) return resolve();
+        if(!key || key.includes("PASTE_")) return reject(new Error("Missing Google Maps key. Set it in googlelogin/config.js"));
+
+        window.__sfInitMap = () => resolve();
+
+        const s = document.createElement("script");
+        s.async = true; s.defer = true;
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&callback=__sfInitMap`;
+        s.onerror = () => reject(new Error("Failed to load Google Maps JS."));
+        document.head.appendChild(s);
+      });
+    }
+
+    // ====== MAP STATE ======
+    let map, info, pinMarker;
+
+    let placeMarkers = [];
+    let txtMarkers = [];
     let markersByCode = new Map();
-    let lastData = [];
 
-    let userPos = null;
-    let userMarker = null;
-    let userLabel = ""; // град/област (ако се извади)
+    // SF Active
+    let activeMarkers = [];
+    let activeById = new Map();
+    let activeRows = [];
+    let activeUnsub = null;
 
-    let viewMode = "near"; // "near" | "all"
+    let lastSearchedCenter = null;
+    let lastMode = "places"; // "places" | "txt" | "sf"
+    let currentUid = null;
 
-    function initMap(){
+    function clearPlaceMarkers(){ placeMarkers.forEach(m => m.setMap(null)); placeMarkers = []; }
+    function clearTxtMarkers(){ txtMarkers.forEach(m => m.setMap(null)); txtMarkers = []; markersByCode.clear(); }
+    function clearActiveMarkers(){ activeMarkers.forEach(m => m.setMap(null)); activeMarkers = []; activeById.clear(); }
+
+    function fitMarkers(list){
+      if(!list.length){
+        map.setCenter(pinMarker ? pinMarker.getPosition() : DEFAULT_CENTER);
+        map.setZoom(13);
+        return;
+      }
+      const bounds = new google.maps.LatLngBounds();
+      if(pinMarker) bounds.extend(pinMarker.getPosition());
+      list.forEach(m => bounds.extend(m.getPosition()));
+      map.fitBounds(bounds, 70);
+    }
+
+    function getCenterLatLng(){
+      const c = pinMarker ? pinMarker.getPosition() : map.getCenter();
+      return { lat: c.lat(), lng: c.lng() };
+    }
+
+    function currentRadiusMeters(){
+      // Priority 1: UI select
+      const r = Number(radiusSelect.value || 8000);
+      if(Number.isFinite(r) && r > 200) return r;
+
+      // Fallback: based on bounds
+      const b = map.getBounds();
+      if(!b) return 8000;
+      const c = b.getCenter();
+      const ne = b.getNorthEast();
+      const km = approxKm(c.lat(), c.lng(), ne.lat(), ne.lng());
+      const meters = Math.min(Math.max(km * 1000, 800), 30000);
+      return meters;
+    }
+
+    function placeInfoHTML(p){
+      const name = p.displayName?.text || "Service";
+      const addr = p.formattedAddress || "";
+      const phone = p.internationalPhoneNumber || "";
+      const tel = normalizePhoneForTel(phone);
+      const website = p.websiteUri || "";
+      const maps = p.googleMapsUri || "";
+      const openNow = (p.currentOpeningHours && typeof p.currentOpeningHours.openNow === "boolean")
+        ? (p.currentOpeningHours.openNow ? "Open now" : "Closed")
+        : "";
+
+      return `
+        <div style="font-family:Arial;max-width:280px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(name)}</div>
+          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">${escapeHtml(addr)}</div>
+          ${openNow ? `<div style="font-size:12px;font-weight:900;margin-bottom:8px">${openNow}</div>` : ""}
+          ${phone ? `<div style="font-size:12px;margin-bottom:6px">📞 ${escapeHtml(phone)}</div>` : ""}
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            ${maps ? `<a href="${maps}" target="_blank" rel="noopener" style="font-weight:900;text-decoration:none;color:#0b62ff">Google</a>` : ""}
+            ${tel ? `<a href="tel:${tel}" style="font-weight:900;text-decoration:none;color:#0b62ff">Call</a>` : ""}
+            ${website ? `<a href="${website}" target="_blank" rel="noopener" style="font-weight:900;text-decoration:none;color:#0b62ff">Website</a>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    // ====== SF Active (Firestore) — WORLD SAFE ======
+    function activeInfoHTML(r){
+      const mapsLink = r.googleMapsUri
+        ? r.googleMapsUri
+        : `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`;
+      const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`;
+      const tel = normalizePhoneForTel(r.phone);
+
+      return `
+        <div style="font-family:Arial;max-width:290px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(r.name)}</div>
+          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
+            ${r.addr ? `<b>Address:</b> ${escapeHtml(r.addr)}<br/>` : ""}
+            <b>GPS:</b> ${Number(r.lat).toFixed(6)}, ${Number(r.lng).toFixed(6)}<br/>
+            ${r.phone ? `<b>Phone:</b> ${escapeHtml(r.phone)}<br/>` : ""}
+            ${r.ownerEmail ? `<b>Activated by:</b> ${escapeHtml(r.ownerEmail)}<br/>` : ""}
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            <a class="link" href="${mapsLink}" target="_blank" rel="noopener">Google</a>
+            <a class="link" href="${dirLink}" target="_blank" rel="noopener">Directions</a>
+            ${tel ? `<a class="link" href="tel:${tel}">Call</a>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderActivePanel(rows, modeLabel){
+      if(!rows.length){
+        sfActiveWrap.style.display = "none";
+        sfActiveWrap.innerHTML = "";
+        return;
+      }
+      sfActiveWrap.style.display = "block";
+      sfActiveWrap.innerHTML = "";
+
+      const head = document.createElement("div");
+      head.className = "sfHeader";
+      head.innerHTML = `
+        <div>SOULFLAME • Active now</div>
+        <div class="sfTag">
+          ${modeLabel ? `<span class="sfMini">${escapeHtml(modeLabel)}</span>` : ""}
+          <span>${rows.length}</span>
+        </div>
+      `;
+      sfActiveWrap.appendChild(head);
+
+      rows.forEach((r) => {
+        const tel = normalizePhoneForTel(r.phone);
+
+        const el = document.createElement("div");
+        el.className = "item sfActive";
+        el.innerHTML = `
+          <div class="badge sf">SF</div>
+          <div class="meta">
+            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
+            <div class="addr">
+              ${r.addr ? escapeHtml(r.addr) + " • " : ""}
+              ${Number(r.lat).toFixed(6)}, ${Number(r.lng).toFixed(6)}
+            </div>
+            <div class="row2">
+              <span class="sfMini">ONLINE ✅</span>
+              ${r.ownerEmail ? `<span class="sfMini">${escapeHtml(r.ownerEmail)}</span>` : ""}
+              ${tel ? `<a class="link" href="tel:${tel}" onclick="event.stopPropagation()">Call</a>` : ""}
+              <a class="link" href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Directions</a>
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          const hit = activeById.get(r._id);
+          if(!hit) return;
+          map.panTo(hit.marker.getPosition());
+          map.setZoom(16);
+          google.maps.event.trigger(hit.marker, "click");
+        });
+        sfActiveWrap.appendChild(el);
+      });
+    }
+
+    function renderActiveMarkers(rows){
+      clearActiveMarkers();
+      rows.forEach((r) => {
+        const mk = new google.maps.Marker({
+          position: { lat: Number(r.lat), lng: Number(r.lng) },
+          map,
+          title: r.name,
+          label: { text: "SF" }
+        });
+        mk.addListener("click", () => {
+          info.setContent(activeInfoHTML(r));
+          info.open({ map, anchor: mk });
+        });
+        activeMarkers.push(mk);
+        activeById.set(r._id, { row: r, marker: mk });
+      });
+    }
+
+    function subscribeActiveServicesRealtime(){
+      // Preview или Firebase OFF → без live subscribe
+      if(isPreview() || !firebaseEnabled || !db){
+        renderActivePanel([], "");
+        clearActiveMarkers();
+        return;
+      }
+
+      if(activeUnsub) { try{ activeUnsub(); }catch(e){} activeUnsub = null; }
+
+      // ✅ SAFE WORLD MODE:
+      // 1) взимаме isActive==true
+      // 2) limit (пример 200) за да не дърпаме “целия свят”
+      // 3) филтрираме по близост до центъра на картата (client-side)
+      const qy = query(
+        collection(db, "businesses"),
+        where("isActive", "==", true),
+        orderBy("updatedAt", "desc"),
+        limit(200)
+      );
+
+      activeUnsub = onSnapshot(qy, (snap) => {
+        const rows = [];
+        snap.forEach((ds) => {
+          const d = ds.data() || {};
+          const lat = Number(d.lat ?? d.location?.lat ?? d.gps?.lat);
+          const lng = Number(d.lng ?? d.location?.lng ?? d.gps?.lng);
+          if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          const ts =
+            (d.activatedAt?.toMillis ? d.activatedAt.toMillis() : 0) ||
+            (d.updatedAt?.toMillis ? d.updatedAt.toMillis() : 0) || 0;
+
+          rows.push({
+            _id: ds.id,
+            _ts: ts,
+            code: d.code || "",
+            name: d.name || "Service",
+            addr: d.addr || "",
+            lat, lng,
+            phone: d.phone || "",
+            googleMapsUri: d.googleMapsUri || "",
+            ownerEmail: d.ownerEmail || d.activatedByEmail || ""
+          });
+        });
+
+        // Filter by distance to center
+        const center = getCenterLatLng();
+        const rMeters = currentRadiusMeters();
+        const rKm = rMeters / 1000;
+
+        const nearby = rows
+          .filter(r => approxKm(center.lat, center.lng, r.lat, r.lng) <= rKm)
+          .sort((a,b) => (b._ts || 0) - (a._ts || 0))
+          .slice(0, 40);
+
+        activeRows = nearby;
+        renderActivePanel(activeRows, "LIVE");
+        renderActiveMarkers(activeRows);
+      }, (err) => {
+        console.warn(err);
+        renderActivePanel([], "");
+        clearActiveMarkers();
+      });
+    }
+
+    // ====== TXT fallback (world-ready) ======
+    async function fetchTxt(url){
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok) throw new Error("TXT not found ("+res.status+").");
+      return await res.text();
+    }
+
+    // format tolerant: CODE | Name | Address | lat | lng | optional...
+    function parseTxt(txt){
+      const lines = String(txt || "")
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith("#"));
+
+      const out = [];
+      for(const line of lines){
+        const parts = line.split("|").map(p => p.trim()).filter(Boolean);
+        if(parts.length < 4) continue;
+
+        const nums = parts.map(p => Number(String(p).replace(",", ".")));
+        let latIdx = -1, lngIdx = -1;
+
+        for(let i=0;i<parts.length;i++){
+          const n = nums[i];
+          if(Number.isFinite(n) && Math.abs(n) <= 90) {
+            if(i+1 < parts.length){
+              const n2 = nums[i+1];
+              if(Number.isFinite(n2) && Math.abs(n2) <= 180){
+                latIdx = i; lngIdx = i+1; break;
+              }
+            }
+          }
+        }
+        if(latIdx === -1) continue;
+
+        const code = parts[0];
+        const name = parts[1] || "Service";
+        const addr = (latIdx >= 3) ? parts[2] : "";
+        const lat = Number(String(parts[latIdx]).replace(",", "."));
+        const lng = Number(String(parts[lngIdx]).replace(",", "."));
+        const source = parts.slice(lngIdx+1).join(" | ");
+
+        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        out.push({ code, name, addr, lat, lng, source });
+      }
+      return out;
+    }
+
+    function markerHtmlTxt(row){
+      const mapsLink = `https://www.google.com/maps/search/?api=1&query=${row.lat},${row.lng}`;
+      return `
+        <div style="font-family:Arial;max-width:280px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(row.name)}</div>
+          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
+            ${row.addr ? `<b>Address:</b> ${escapeHtml(row.addr)}<br/>` : ""}
+            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            <a href="${mapsLink}" target="_blank" rel="noopener"
+              style="font-weight:900;text-decoration:none;color:#0b62ff">Google</a>
+          </div>
+          ${row.source ? `<div style="margin-top:8px;font-size:11px;opacity:.7">${escapeHtml(row.source)}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderTxt(rows){
+      panelTitle.textContent = "TXT fallback";
+      resultsEl.innerHTML = "";
+      countPill.textContent = String(rows.length);
+
+      clearTxtMarkers();
+      clearPlaceMarkers();
+
+      rows.forEach((r) => {
+        const mk = new google.maps.Marker({
+          position: { lat: r.lat, lng: r.lng },
+          map,
+          title: r.name,
+          label: {
+            text: r.name,
+            fontSize: "11px",
+            fontWeight: "700",
+            color: "#111",
+            className: "marker-label"
+          }
+        });
+
+        mk.addListener("click", () => {
+          info.setContent(markerHtmlTxt(r));
+          info.open({ map, anchor: mk });
+        });
+
+        txtMarkers.push(mk);
+        markersByCode.set(r.code.toUpperCase(), { row: r, marker: mk });
+
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="badge">${escapeHtml(r.code)}</div>
+          <div class="meta">
+            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
+            <div class="addr">
+              ${r.addr ? escapeHtml(r.addr) + " • " : ""}
+              ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}
+            </div>
+            <div class="row2">
+              <span style="font-weight:900;opacity:.8">GPS</span>
+              <a class="link" target="_blank" rel="noopener"
+                href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}">Google</a>
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          map.panTo({ lat: r.lat, lng: r.lng });
+          map.setZoom(15);
+          google.maps.event.trigger(mk, "click");
+        });
+
+        resultsEl.appendChild(el);
+      });
+
+      fitMarkers(txtMarkers);
+      setStatus(`TXT OK: ${rows.length}`);
+      lastMode = "txt";
+    }
+
+    function computeTxtUrl(){
+      // optional: /map_user.html?cc=BG&city=Sliven
+      const u = new URL(window.location.href);
+      const cc = (u.searchParams.get("cc") || getRegion2() || "BG").toUpperCase();
+      const city = (u.searchParams.get("city") || localStorage.getItem("SF_CITY") || "Sliven").trim();
+      const url = TXT_WORLD_TEMPLATE
+        .replace("{CC}", encodeURIComponent(cc))
+        .replace("{CITY}", encodeURIComponent(city));
+      return url;
+    }
+
+    async function loadTxtAndRender(first){
+      try{
+        setStatus(first ? "Loading TXT…" : "Refreshing TXT…");
+        const url = computeTxtUrl();
+        const txt = await fetchTxt(url);
+        const rows = parseTxt(txt);
+        renderTxt(rows);
+      }catch(err){
+        console.error(err);
+        setStatus("TXT error: " + (err?.message || err));
+        countPill.textContent = "0";
+        resultsEl.innerHTML = `<div style="padding:10px;color:#b91c1c;font-weight:900">
+          TXT fallback not available for this city/country.
+        </div>`;
+      }
+    }
+
+    // ====== Google Places (Nearby Search) ======
+    async function searchNearby(lat, lng){
+      panelTitle.textContent = "Nearby services (Google)";
+      setStatus("Searching nearby…");
+      resultsEl.innerHTML = "";
+      countPill.textContent = "…";
+
+      clearPlaceMarkers();
+      clearTxtMarkers();
+
+      lastSearchedCenter = new google.maps.LatLng(lat, lng);
+
+      const apiKey = SF_GOOGLE_MAPS_KEY;
+      const radius = currentRadiusMeters();
+      const type = typeSelect.value || "car_repair";
+      const qtext = (queryInput.value || "").trim();
+
+      const lang = getLang2();
+      const region = getRegion2(); // optional
+
+      try{
+        const url = "https://places.googleapis.com/v1/places:searchNearby";
+
+        const body = {
+          includedTypes: [type],
+          maxResultCount: MAX_RESULTS,
+          rankPreference: "DISTANCE",
+          languageCode: lang,
+          // regionCode: region, // ✅ for strict regional results you can enable it
+          locationRestriction: {
+            circle: {
+              center: { latitude: lat, longitude: lng },
+              radius
+            }
+          }
+        };
+
+        // Optional text filter (simple)
+        // NOTE: searchNearby doesn't accept a "textQuery" param.
+        // We'll do client-side filter by name/address if user typed something.
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": [
+              "places.id",
+              "places.displayName",
+              "places.formattedAddress",
+              "places.location",
+              "places.rating",
+              "places.userRatingCount",
+              "places.googleMapsUri",
+              "places.websiteUri",
+              "places.internationalPhoneNumber",
+              "places.currentOpeningHours"
+            ].join(",")
+          },
+          body: JSON.stringify(body)
+        });
+
+        if(!res.ok){
+          const txt = await res.text();
+          throw new Error("HTTP "+res.status+" — "+txt.slice(0,600));
+        }
+
+        const data = await res.json();
+        let places = data.places || [];
+
+        if(qtext){
+          const q = qtext.toLowerCase();
+          places = places.filter(p => {
+            const n = (p.displayName?.text || "").toLowerCase();
+            const a = (p.formattedAddress || "").toLowerCase();
+            return n.includes(q) || a.includes(q);
+          });
+        }
+
+        countPill.textContent = String(places.length);
+        setStatus(places.length ? `Found: ${places.length} • radius ${Math.round(radius/1000)}km` : "No results in this radius.");
+        drawPlaces(places);
+        lastMode = "places";
+
+      }catch(err){
+        console.error(err);
+        const msg = String(err?.message || err);
+        if(msg.includes("403") || msg.includes("PERMISSION_DENIED")){
+          setStatus("403: Places API OFF / Billing OFF / Key restrictions.\nSwitching to TXT fallback…");
+        }else{
+          setStatus("Places error.\nSwitching to TXT fallback…");
+        }
+        lastMode = "txt";
+        loadTxtAndRender(true);
+      }
+    }
+
+    function drawPlaces(places){
+      resultsEl.innerHTML = "";
+      clearPlaceMarkers();
+
+      const bounds = new google.maps.LatLngBounds();
+      if(pinMarker) bounds.extend(pinMarker.getPosition());
+
+      places.forEach((p, i) => {
+        const name = p.displayName?.text || "Service";
+        const addr = p.formattedAddress || "";
+        const rating = (p.rating != null) ? p.rating.toFixed(1) : null;
+        const count = p.userRatingCount || 0;
+
+        const lat = p.location?.latitude;
+        const lng = p.location?.longitude;
+        if(lat == null || lng == null) return;
+
+        const phone = p.internationalPhoneNumber || "";
+        const tel = normalizePhoneForTel(phone);
+
+        const mk = new google.maps.Marker({
+          position: { lat, lng },
+          map,
+          title: name,
+          label: { text: String(i+1) }
+        });
+
+        mk.addListener("click", () => {
+          info.setContent(placeInfoHTML(p));
+          info.open({ map, anchor: mk });
+        });
+
+        placeMarkers.push(mk);
+        bounds.extend({ lat, lng });
+
+        const mapsLink = p.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${encodeURIComponent(p.id||"")}`;
+        const dirLink  = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}${p.id ? `&destination_place_id=${encodeURIComponent(p.id)}` : ""}`;
+
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="badge">${i+1}</div>
+          <div class="meta">
+            <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+            <div class="addr">${escapeHtml(addr)}</div>
+            <div class="row2">
+              ${rating ? `<span>⭐ ${rating} (${count})</span>` : `<span>No rating</span>`}
+              <a class="link" href="${mapsLink}" target="_blank" rel="noopener">Google</a>
+              <a class="link" href="${dirLink}" target="_blank" rel="noopener">Directions</a>
+              ${tel ? `<a class="link" href="tel:${tel}" onclick="event.stopPropagation()">Call</a>` : ""}
+            </div>
+          </div>
+        `;
+        el.addEventListener("click", () => {
+          map.panTo({ lat, lng });
+          map.setZoom(15);
+          google.maps.event.trigger(mk, "click");
+        });
+
+        resultsEl.appendChild(el);
+      });
+
+      if(!bounds.isEmpty()) map.fitBounds(bounds, 70);
+    }
+
+    // ====== MAP INIT ======
+    function initMap(center){
       map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: FALLBACK_CENTER,
+        zoom: 14,
+        center,
         mapTypeControl: true,
         mapTypeControlOptions: {
           style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
@@ -218,308 +1023,227 @@
 
       info = new google.maps.InfoWindow();
 
-      // първо: вземи GPS и центрирай
-      locateUser(true);
+      map.addListener("click", (e) => {
+        setPinAndSearch(e.latLng.lat(), e.latLng.lng(), true);
+      });
 
-      // зареди TXT
-      loadAndRender(true);
-      setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
+      map.addListener("idle", () => {
+        if(!lastSearchedCenter) return;
+        const c = map.getCenter();
+        const distKm = approxKm(lastSearchedCenter.lat(), lastSearchedCenter.lng(), c.lat(), c.lng());
+        if(distKm > 0.25) searchAreaBtn.classList.add("show");
+      });
 
-      // UI
-      btnReload.addEventListener("click", () => loadAndRender(false));
-      btnAll.addEventListener("click", () => { viewMode = "all"; applyView(lastData); });
-      btnNear.addEventListener("click", () => { viewMode = "near"; applyView(lastData); });
-      btnLocate.addEventListener("click", () => locateUser(true));
-      radiusKmEl.addEventListener("change", () => applyView(lastData));
-      qEl.addEventListener("input", () => applyView(lastData));
+      searchAreaBtn.addEventListener("click", () => {
+        const c = map.getCenter();
+        setPinAndSearch(c.lat(), c.lng(), true);
+        searchAreaBtn.classList.remove("show");
+      });
+
+      btnRefresh.addEventListener("click", () => {
+        const p = pinMarker ? pinMarker.getPosition() : map.getCenter();
+        setPinAndSearch(p.lat(), p.lng(), true);
+      });
+
+      btnNearMe.addEventListener("click", () => locateAndSearch(true));
+
+      btnUseTxt.addEventListener("click", () => {
+        lastMode = "txt";
+        loadTxtAndRender(true);
+      });
+
+      btnSF.addEventListener("click", () => {
+        lastMode = "sf";
+        setStatus("SF Active…");
+        // refresh the active filter around current center
+        subscribeActiveServicesRealtime();
+        // keep google markers on map (optional) or clear them:
+        // clearPlaceMarkers(); clearTxtMarkers();
+      });
+
+      // auto refresh TXT if in TXT mode
+      setInterval(() => {
+        if(lastMode === "txt") loadTxtAndRender(false);
+      }, AUTO_REFRESH_MS);
     }
-    window.initMap = initMap;
 
-    // ====== LOCATION ======
-    function locateUser(center){
-      if(!navigator.geolocation){
-        setStatus("GPS не се поддържа от браузъра. Ползвам fallback център.");
+    // ====== START / BOOT ======
+    async function bootstrapStart(){
+      setStatus("Boot…");
+
+      // 1) decide center
+      const saved = getSavedLocation();
+      const fallbackCenter = (saved?.lat && saved?.lng) ? { lat: saved.lat, lng: saved.lng } : DEFAULT_CENTER;
+
+      // 2) Preview mode: no auth required
+      if(isPreview()){
+        userStrip.style.display = "none";
+        setStatus("Preview mode ✅ (no login required)");
+        initMap(fallbackCenter);
+
+        // show SF active disabled in preview
+        renderActivePanel([], "");
+        clearActiveMarkers();
+
+        // try geo now
+        locateAndSearch(true);
         return;
       }
 
-      setStatus("Искам GPS… (Allow)");
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      // 3) Live mode: auth required (your original flow)
+      if(!firebaseEnabled || !auth){
+        setStatus("⚠️ Firebase OFF. Map works, but no login/SF Active.");
+        initMap(fallbackCenter);
+        locateAndSearch(true);
+        return;
+      }
 
-        // user marker
-        if(userMarker) userMarker.setMap(null);
-        userMarker = new google.maps.Marker({
-          position: userPos,
-          map,
-          title: "Ти си тук",
-          label: { text: "YOU", fontSize:"10px", fontWeight:"900", color:"#111", className:"marker-label" }
-        });
-
-        if(center){
-          map.setCenter(userPos);
-          map.setZoom(13);
+      onAuthStateChanged(auth, async (user) => {
+        if(!user){
+          setStatus("❌ Not logged in. Back to access screen…");
+          window.location.href = "./access_location_user.html";
+          return;
         }
 
-        // опит за град/област (без Places; това е Geocoder от Maps JS)
-        userLabel = "";
+        currentUid = user.uid;
+        showUser(user);
+        try{ await upsertUserProfile(user); }catch(e){ console.warn(e); }
+
+        initMap(fallbackCenter);
+
+        // SF Active subscribe (filtered near center)
+        subscribeActiveServicesRealtime();
+
+        // Location priority: localStorage -> firestore -> geolocation -> fallback
+        const localLoc = getSavedLocation();
+        if(localLoc && typeof localLoc.lat === "number" && typeof localLoc.lng === "number"){
+          setStatus("Using saved location…");
+          setPinAndSearch(localLoc.lat, localLoc.lng, true);
+          return;
+        }
+
+        const fsLoc = await readLastLocationFromFirestore(user.uid);
+        if(fsLoc && typeof fsLoc.lat === "number" && typeof fsLoc.lng === "number"){
+          setStatus("Using Firestore location…");
+          saveLocalLocation("user", fsLoc.lat, fsLoc.lng, fsLoc.accuracy_m ?? null, fsLoc.source || "firestore");
+          setPinAndSearch(fsLoc.lat, fsLoc.lng, true);
+          return;
+        }
+
+        locateAndSearch(true);
+      });
+
+      btnLogout.addEventListener("click", async () => {
         try{
-          const geocoder = new google.maps.Geocoder();
-          geocoder.geocode({ location: userPos }, (res, status) => {
-            if(status === "OK" && res && res[0]){
-              const comp = res[0].address_components || [];
-              const get = (type) => (comp.find(c => (c.types||[]).includes(type))?.long_name) || "";
-              const city = get("locality") || get("administrative_area_level_2") || "";
-              const oblast = get("administrative_area_level_1") || "";
-              userLabel = [city, oblast].filter(Boolean).join(", ");
-              applyTitle();
-            }
-          });
-        }catch(_){}
+          if(activeUnsub){ try{ activeUnsub(); }catch(e){} activeUnsub = null; }
+          clearActiveMarkers();
+          renderActivePanel([]);
 
-        applyTitle();
-        applyView(lastData);
-        setStatus("GPS OK" + (userLabel ? " • " + userLabel : ""));
-      }, (err) => {
-        console.warn(err);
-        setStatus("Няма GPS достъп. Ползвам fallback център (Сливен).");
-        userPos = null;
-        applyTitle();
-        applyView(lastData);
-      }, {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 30000
+          await signOut(auth);
+          setStatus("Logout…");
+          window.location.href = "./access_location_user.html";
+        }catch(e){
+          setStatus("❌ Logout error.");
+        }
       });
     }
 
-    function applyTitle(){
-      if(viewMode === "near"){
-        panelTitleEl.textContent = "Сервизи около теб" + (userLabel ? (" • " + userLabel) : "");
-      } else {
-        panelTitleEl.textContent = "Всички сервизи от TXT";
-      }
-    }
-
-    // ====== TXT LOADING ======
-    async function fetchTxt(url){
-      // v=Date.now() убива edge cache без Ctrl+F5
-      const u = url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
-      const res = await fetch(u, { cache: "no-store" });
-      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери /public/QR_serveses/.");
-      return await res.text();
-    }
-
-    function normalizeCode(s){
-      return (s || "")
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g,"-")
-        .replace(/[^A-Z0-9\-]/g,"");
-    }
-
-    function parseTxt(txt){
-      const lines = String(txt || "")
-        .split(/\r?\n/)
-        .map(l => l.trim())
-        .filter(l => l && !l.startsWith("#"));
-
-      const out = [];
-      for(const line of lines){
-        const parts = line.split("|").map(p => p.trim());
-        if(parts.length < 5) continue;
-
-        const code = normalizeCode(parts[0]);
-        const name = parts[1] || "Автосервиз";
-        const addr = parts[2] || "";
-        const lat = Number(String(parts[3]).replace(",", "."));
-        const lng = Number(String(parts[4]).replace(",", "."));
-
-        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, raw: line });
-      }
-      return out;
-    }
-
-    // ====== HELPERS ======
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-      }[m]));
-    }
-
-    function haversineKm(a, b){
-      const R = 6371;
-      const toRad = (x) => x * Math.PI / 180;
-      const dLat = toRad(b.lat - a.lat);
-      const dLng = toRad(b.lng - a.lng);
-      const s1 = Math.sin(dLat/2), s2 = Math.sin(dLng/2);
-      const q = s1*s1 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*s2*s2;
-      return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
-    }
-
-    function clearMarkers(){
-      for(const m of markers) m.setMap(null);
-      markers = [];
-      markersByCode.clear();
-    }
-
-    function fitRows(rows){
-      if(!rows.length){
-        if(userPos){ map.setCenter(userPos); map.setZoom(13); }
-        else { map.setCenter(FALLBACK_CENTER); map.setZoom(12); }
+    function locateAndSearch(doSearch){
+      if(!navigator.geolocation){
+        setStatus("Geolocation not supported. Using fallback center.");
+        setPinAndSearch(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, doSearch);
         return;
       }
-      const bounds = new google.maps.LatLngBounds();
-      rows.forEach(r => bounds.extend({lat:r.lat, lng:r.lng}));
-      if(userPos) bounds.extend(userPos);
-      map.fitBounds(bounds, 70);
-    }
+      setStatus("Requesting location…");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
 
-    // ====== RENDER ======
-    function markerHtml(row){
-      const mapsLink = `https://www.google.com/maps/search/?api=1&query=${row.lat},${row.lng}`;
-      return `
-        <div style="font-family:Arial;max-width:290px">
-          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(row.name)}</div>
-          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
-            ${row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br/>` : ""}
-            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-            <a href="${mapsLink}" target="_blank" rel="noopener"
-              style="font-weight:900;text-decoration:none;color:#0b62ff">Отвори в Google</a>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderPins(rows){
-      clearMarkers();
-
-      rows.forEach((r, idx) => {
-        const mk = new google.maps.Marker({
-          position: { lat: r.lat, lng: r.lng },
-          map,
-          title: r.name,
-          label: {
-            text: String(idx + 1),
-            fontSize: "11px",
-            fontWeight: "800",
-            color: "#111",
-            className: "marker-label"
+          saveLocalLocation("user", lat, lng, pos.coords.accuracy, "geolocation");
+          if(currentUid){
+            writeLastLocationThrottled(currentUid, {
+              mode: "user",
+              lat, lng,
+              accuracy_m: pos.coords.accuracy ?? null,
+              ts: new Date().toISOString(),
+              source: "geolocation"
+            });
           }
-        });
 
-        mk.addListener("click", () => {
-          info.setContent(markerHtml(r));
-          info.open({ map, anchor: mk });
-        });
-
-        markers.push(mk);
-        markersByCode.set(normalizeCode(r.code||""), { row: r, marker: mk });
-      });
+          setPinAndSearch(lat, lng, doSearch);
+        },
+        () => {
+          setStatus("Location denied. Using fallback center.");
+          saveLocalLocation("user", DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, null, "fallback");
+          if(currentUid){
+            writeLastLocationThrottled(currentUid, {
+              mode: "user",
+              lat: DEFAULT_CENTER.lat,
+              lng: DEFAULT_CENTER.lng,
+              accuracy_m: null,
+              ts: new Date().toISOString(),
+              source: "fallback"
+            });
+          }
+          setPinAndSearch(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, doSearch);
+        },
+        { enableHighAccuracy:true, timeout:12000, maximumAge:5000 }
+      );
     }
 
-    function renderList(rows){
-      resultsEl.innerHTML = "";
-      countPill.textContent = String(rows.length);
+    function setPinAndSearch(lat, lng, doSearch){
+      const pos = { lat, lng };
 
-      if(!rows.length){
-        resultsEl.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.75">
-          Няма резултати за този филтър.
-        </div>`;
-        return;
-      }
-
-      rows.forEach((r, i) => {
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div class="badge">${i+1}</div>
-          <div class="meta">
-            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
-            <div class="addr">${r.addr ? escapeHtml(r.addr) + "<br>" : ""}${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}</div>
-            ${typeof r._km === "number" ? `<div class="dist">≈ ${r._km.toFixed(1)} km</div>` : ""}
-          </div>
-        `;
-        el.addEventListener("click", () => {
-          map.panTo({ lat: r.lat, lng: r.lng });
-          map.setZoom(16);
-          const hit = markersByCode.get(normalizeCode(r.code||""));
-          if(hit) google.maps.event.trigger(hit.marker, "click");
+      if(!pinMarker){
+        pinMarker = new google.maps.Marker({
+          position: pos,
+          map,
+          draggable: true,
+          title: "Search from here"
         });
-        resultsEl.appendChild(el);
-      });
-    }
-
-    function applyView(allRows){
-      lastData = allRows || [];
-      applyTitle();
-
-      const q = (qEl.value || "").trim().toLowerCase();
-      let rows = [...lastData];
-
-      if(q){
-        rows = rows.filter(r =>
-          (r.name||"").toLowerCase().includes(q) ||
-          (r.addr||"").toLowerCase().includes(q) ||
-          (r.code||"").toLowerCase().includes(q)
-        );
-      }
-
-      if(viewMode === "near" && userPos){
-        const radiusKm = Math.max(1, Math.min(80, Number(radiusKmEl.value || 10)));
-        rows = rows
-          .map(r => ({ ...r, _km: haversineKm(userPos, {lat:r.lat, lng:r.lng}) }))
-          .filter(r => r._km <= radiusKm)
-          .sort((a,b) => a._km - b._km);
-        setStatus(`OK: ${rows.length} сервиза в ${radiusKm} km` + (userLabel ? ` • ${userLabel}` : ""));
-      } else if(viewMode === "near" && !userPos){
-        setStatus("Няма GPS → показвам всички (fallback). Натисни 'Центрирай ме'.");
+        pinMarker.addListener("dragend", () => {
+          const p = pinMarker.getPosition();
+          setPinAndSearch(p.lat(), p.lng(), true);
+        });
       } else {
-        setStatus(`OK: ${rows.length} сервиза от TXT`);
+        pinMarker.setPosition(pos);
       }
 
-      renderPins(rows);
-      renderList(rows);
-      fitRows(rows);
+      map.setCenter(pos);
+      map.setZoom(14);
+
+      saveLocalLocation("user", lat, lng, null, "pin");
+      if(currentUid){
+        writeLastLocationThrottled(currentUid, {
+          mode: "user",
+          lat, lng,
+          accuracy_m: null,
+          ts: new Date().toISOString(),
+          source: "pin"
+        });
+      }
+
+      // refresh SF active near this center too
+      subscribeActiveServicesRealtime();
+
+      if(doSearch){
+        lastMode = "places";
+        searchNearby(lat, lng);
+      }
     }
 
-    async function loadAndRender(first){
+    // ====== Boot ======
+    (async function boot(){
       try{
-        setStatus(first ? "Зареждам TXT…" : "Обновявам…");
-        const txt = await fetchTxt(DATA_URL);
-        const rows = parseTxt(txt);
-        applyView(rows);
-      }catch(err){
-        console.error(err);
-        setStatus("Грешка: " + (err?.message || err));
+        setStatus("Loading Google Maps…");
+        await loadGoogleMaps(SF_GOOGLE_MAPS_KEY);
+        setStatus("Maps loaded ✅");
+        await bootstrapStart();
+      }catch(e){
+        console.error(e);
+        setStatus("❌ " + (e?.message || e));
       }
-    }
-  </script>
-
-  <!-- ✅ SAFE Google Maps Loader (без async/places, без Ctrl+F5) -->
-  <script>
-    (function loadGoogleMapsSafely(){
-      const KEY = "AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ"; // <-- твоя key
-
-      const cb = "__sfMapsCb_" + Math.random().toString(36).slice(2);
-      window[cb] = function(){
-        try { delete window[cb]; } catch(e){}
-        if (typeof window.initMap === "function") window.initMap();
-      };
-
-      const s = document.createElement("script");
-      s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(KEY) +
-              "&callback=" + encodeURIComponent(cb) +
-              "&v=" + Date.now(); // cache-bust
-      s.async = false;
-      s.onerror = () => {
-        const st = document.getElementById("status");
-        if(st) st.textContent = "Грешка: Google Maps не се зареди.";
-        console.error("Google Maps load failed");
-      };
-      document.head.appendChild(s);
     })();
   </script>
 </body>
