@@ -3,966 +3,338 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SoulFlame CarService — Map (Active)</title>
-
-  <!-- анти-cache (помага срещу Ctrl+F5) -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <!-- малък favicon (за да няма 404) -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' x='6' font-size='48'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E"/>
+  <title>SoulFlame CarService — Map (User / TXT Only)</title>
 
   <style>
     html, body { margin:0; padding:0; height:100%; font-family: Arial, sans-serif; }
     #map { height:100%; width:100%; }
 
+    :root{
+      --ink:#111827;
+      --muted:rgba(17,24,39,.72);
+      --stroke:rgba(17,24,39,.12);
+      --shadow:0 12px 30px rgba(0,0,0,.18);
+      --glass:rgba(255,255,255,.94);
+      --blue:#0b62ff;
+      --green:#16a34a;
+      --red:#b91c1c;
+      --amber:#f59e0b;
+    }
+
     #menu-button{
       position:absolute; top:15px; left:15px; z-index:1000;
-      background:#111827; color:#fff; border:none;
-      padding:10px 15px; font-size:20px; cursor:pointer; border-radius:10px;
-      box-shadow:0 12px 30px rgba(0,0,0,.18);
+      background:var(--ink); color:#fff; border:none;
+      padding:10px 15px; font-size:20px; cursor:pointer; border-radius:12px;
+      box-shadow:var(--shadow);
     }
 
-    #panel-container{
-      position:absolute; top:60px; left:15px; width:min(380px, 92vw);
-      max-height: 72vh; overflow:hidden;
-      z-index:999; border-radius:14px;
-      background: rgba(255,255,255,.94);
+    #panel{
+      position:absolute; top:60px; left:15px; z-index:999;
+      width:min(440px, 92vw);
+      max-height:78vh;
+      overflow:hidden;
+      border-radius:16px;
+      background:var(--glass);
       backdrop-filter: blur(10px);
-      border:1px solid rgba(17,24,39,.10);
+      border:1px solid var(--stroke);
       box-shadow:0 0 10px rgba(0,0,0,.2);
     }
-    #panel-inner{ padding:12px; display:flex; flex-direction:column; gap:10px; }
+    #panelInner{ padding:12px; display:flex; flex-direction:column; gap:10px; }
 
-    .panel-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .panel-title{ font-weight:900; letter-spacing:.4px; color:#111827; font-size:14px; }
+    .head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .title{ font-weight:900; color:var(--ink); font-size:14px; letter-spacing:.3px; }
     .pill{
       font-size:12px; padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(17,24,39,.12);
-      background:#fff; color:#111827;
+      border:1px solid var(--stroke);
+      background:#fff; color:var(--ink); font-weight:900;
+    }
+
+    .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .btn{
+      border:none; cursor:pointer; border-radius:12px;
+      padding:10px 12px; font-weight:900; font-size:12px;
+      background:var(--ink); color:#fff;
+    }
+    .btn.secondary{
+      background:#fff; color:var(--ink);
+      border:1px solid var(--stroke);
+    }
+    .search{
+      flex:1; min-width:180px;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
       font-weight:900;
     }
 
-    .controls{ display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{
-      border:none; cursor:pointer; border-radius:12px;
-      padding:10px 12px; font-weight:900; font-size:12px; letter-spacing:.6px;
-      background:#111827; color:#fff;
-    }
-    .btn.secondary{
-      background:#fff; color:#111827;
-      border:1px solid rgba(17,24,39,.14);
-    }
-
-    .results{
+    #results{
       overflow:auto;
-      max-height: calc(72vh - 210px);
+      max-height: calc(78vh - 168px);
       padding-right:4px;
     }
 
     .item{
       border:1px solid rgba(17,24,39,.10);
-      background:#fff; border-radius:14px; padding:10px; margin-bottom:10px;
-      display:flex; gap:10px; align-items:flex-start;
+      background:#fff;
+      border-radius:14px;
+      padding:10px;
+      margin-bottom:10px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
       cursor:pointer;
+      transition:transform .08s ease, box-shadow .08s ease;
     }
+    .item:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,0,0,.08); }
 
     .badge{
-      min-width:54px;
-      width:54px;
-      height:54px;
-      border-radius:16px;
-      background: rgba(17,24,39,.06);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      flex: 0 0 54px;
-      border:1px solid rgba(17,24,39,.10);
-    }
-    .badge img{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .badge .fallback{
+      min-width:44px; height:34px; border-radius:12px;
+      background: rgba(17,24,39,.08);
+      display:grid; place-items:center;
       font-weight:900;
-      font-size:13px;
-      color:#111827;
-      text-transform:uppercase;
+      padding:0 10px;
+      font-size:11px;
+      color:var(--ink);
+      user-select:none;
     }
 
     .meta{ flex:1; min-width:0; }
+    .nameRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .name{
-      font-weight:900; font-size:13px; color:#111827;
+      font-weight:900; font-size:13px; color:var(--ink);
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .addr{ font-size:12px; color:rgba(17,24,39,.72); margin-top:3px; }
+    .addr{ font-size:12px; color:var(--muted); margin-top:3px; line-height:1.35; }
+    .row2{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:12px; color:rgba(17,24,39,.78); }
+    .link{ color:var(--blue); text-decoration:none; font-weight:900; }
 
-    .row2{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;
-      font-size:12px; color:rgba(17,24,39,.75);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    .stars{ display:flex; gap:2px; flex-shrink:0; }
+    .star{
+      width:18px; height:18px; line-height:18px;
+      text-align:center;
+      border-radius:6px;
+      border:1px solid rgba(17,24,39,.14);
+      cursor:pointer; user-select:none;
+      font-size:12px;
+      background:#fff;
     }
-    .row2 .mail{
-      overflow:hidden; text-overflow:ellipsis;
-      max-width: 100%;
-    }
+    .star.on{ background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.55); }
 
     #status{
       position:absolute; right:12px; top:12px; z-index:1000;
       background:rgba(17,24,39,.88); color:#fff;
-      padding:8px 10px; border-radius:10px; font-size:12px;
-      box-shadow:0 10px 26px rgba(0,0,0,.18);
-      max-width:min(520px, 92vw);
+      padding:8px 10px; border-radius:12px; font-size:12px;
+      box-shadow:var(--shadow);
+      max-width:min(560px, 92vw);
+      pointer-events:none;
     }
 
-    #bizCard{
-      position:absolute; left:15px; bottom:15px; z-index:1000;
-      width:min(420px, 92vw);
-      background: rgba(255,255,255,.95);
-      border:1px solid rgba(17,24,39,.12);
+    /* Drawer */
+    #drawer{
+      position:absolute; right:15px; bottom:15px; z-index:1000;
+      width:min(480px, 92vw);
+      background:var(--glass);
+      border:1px solid var(--stroke);
       border-radius:16px;
-      box-shadow:0 12px 30px rgba(0,0,0,.18);
-      padding:12px;
+      box-shadow:var(--shadow);
       backdrop-filter: blur(10px);
+      overflow:hidden;
     }
-    #bizCard h3{ margin:0 0 8px 0; font-size:14px; }
-    #bizRow{ display:flex; gap:10px; }
-    #bizCode{
-      flex:1; padding:12px; border-radius:12px;
-      border:1px solid rgba(17,24,39,.14);
-      outline:none;
+    #drawerHead{
+      padding:12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background:#fff;
+      border-bottom:1px solid var(--stroke);
+    }
+    #drawerTitle{
+      font-weight:900; color:var(--ink); font-size:14px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    #drawerBody{ padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .kv{ font-size:12px; color:var(--muted); line-height:1.5; }
+    .kv b{ color:var(--ink); }
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; }
+    .chip{
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 10px;
       font-weight:900;
-      text-transform:uppercase;
+      cursor:pointer;
+      font-size:12px;
     }
-    #bizCheck{
-      border:none; cursor:pointer; border-radius:12px;
-      padding:12px 14px; font-weight:900;
-      background:#111827; color:#fff;
+    .chip.green{ border-color:rgba(22,163,74,.35); background:rgba(22,163,74,.10); }
+    .chip.blue{ border-color:rgba(11,98,255,.35); background:rgba(11,98,255,.10); }
+    .chip.amber{ border-color:rgba(245,158,11,.45); background:rgba(245,158,11,.12); }
+
+    /* Modal */
+    #modalWrap{
+      position:fixed; inset:0; z-index:2000;
+      background:rgba(0,0,0,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
     }
-    #bizHint{
-      margin-top:8px;
-      font-size:12px; line-height:1.45;
-      color:rgba(17,24,39,.75);
+    #modal{
+      width:min(520px, 96vw);
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 30px 90px rgba(0,0,0,.28);
+      border:1px solid rgba(17,24,39,.12);
+      overflow:hidden;
     }
+    #modalHead{
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid rgba(17,24,39,.12);
+      background:#fff;
+    }
+    #modalTitle{ font-weight:900; color:var(--ink); }
+    #modalClose{
+      border:none; background:rgba(17,24,39,.08);
+      border-radius:10px; padding:8px 10px; cursor:pointer; font-weight:900;
+    }
+    #modalBody{ padding:14px; }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+    .field label{ font-size:12px; font-weight:900; color:var(--ink); }
+    .field input, .field textarea{
+      border:1px solid rgba(17,24,39,.14);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      font-weight:700;
+      font-family: Arial, sans-serif;
+    }
+    .field textarea{ min-height:96px; resize:vertical; }
+    .modalActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 
     @media (max-width:520px){
-      #bizRow{ flex-direction:column; }
+      #drawer{ right:12px; left:12px; width:auto; }
+      #panel{ width:min(440px, 92vw); }
     }
-
-    .marker-label {
-      background: rgba(255,255,255,0.92);
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,0,0,0.12);
-      white-space: nowrap;
-    }
-
-    /* ===== Right Slide Panel ===== */
-    #rightPanel{
-      position:fixed;
-      top:0;
-      right:0;
-      height:100%;
-      width:min(420px, 92vw);
-      background: rgba(255,255,255,.96);
-      border-left:1px solid rgba(17,24,39,.12);
-      box-shadow: -18px 0 40px rgba(0,0,0,.12);
-      z-index:1200;
-      transform: translateX(105%);
-      transition: transform .25s ease;
-      backdrop-filter: blur(10px);
-      display:flex;
-      flex-direction:column;
-    }
-    #rightPanel.show{ transform: translateX(0); }
-
-    #rpHead{
-      padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px solid rgba(17,24,39,.10);
-    }
-    #rpTitle{
-      font-weight:900;
-      font-size:14px;
-      color:#111827;
-      line-height:1.2;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      flex:1;
-    }
-    #rpSub{
-      display:block;
-      font-size:12px;
-      opacity:.78;
-      font-weight:800;
-      margin-top:4px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 100%;
-    }
-    #rpClose{
-      border:none;
-      cursor:pointer;
-      border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
-      background:#111827;
-      color:#fff;
-      flex:0 0 auto;
-    }
-    #rpBody{
-      padding:12px;
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .card{
-      border:1px solid rgba(17,24,39,.10);
-      background:#fff;
-      border-radius:14px;
-      padding:12px;
-    }
-    .card h4{
-      margin:0 0 10px 0;
-      font-size:12px;
-      letter-spacing:.6px;
-      text-transform:uppercase;
-      color:rgba(17,24,39,.82);
-    }
-    .f{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-    .f label{ font-size:12px; font-weight:900; color:rgba(17,24,39,.76); }
-    .f input, .f textarea{
-      border:1px solid rgba(17,24,39,.14);
-      border-radius:12px;
-      padding:10px 10px;
-      outline:none;
-      font-weight:800;
-      font-size:13px;
-      background:#fff;
-      color:#111827;
-    }
-    .f textarea{ min-height:90px; resize:vertical; font-weight:700; line-height:1.4; }
-
-    .rpBtns{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .rpBtn{
-      border:none; cursor:pointer; border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
-      font-size:12px;
-      background:#111827;
-      color:#fff;
-    }
-    .rpBtn.secondary{
-      background:#fff; color:#111827;
-      border:1px solid rgba(17,24,39,.14);
-    }
-
-    #chatList{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      margin-top:10px;
-    }
-    .msg{
-      padding:10px;
-      border-radius:12px;
-      border:1px solid rgba(17,24,39,.10);
-      background: rgba(17,24,39,.03);
-      font-size:12px;
-      line-height:1.45;
-    }
-    .msg b{ display:block; font-size:11px; opacity:.75; margin-bottom:4px; }
-    .miniActions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   </style>
 </head>
 
 <body>
   <button id="menu-button">☰</button>
 
-  <div id="panel-container">
-    <div id="panel-inner">
-      <div class="panel-head">
-        <div class="panel-title">Активни сервизи сега</div>
-        <div class="pill" id="countPill">0</div>
+  <div id="panel">
+    <div id="panelInner">
+      <div class="head">
+        <div class="title">Сливен — сервизи (само TXT)</div>
+        <div class="pill" id="count">0</div>
       </div>
 
       <div class="controls">
-        <button class="btn" id="btnReload">Обнови</button>
-        <button class="btn secondary" id="btnShowAll">Покажи всички</button>
+        <button class="btn" id="reload">Обнови TXT</button>
+        <button class="btn secondary" id="fitAll">Покажи всички</button>
+        <input class="search" id="q" placeholder="Търси по име/адрес/код..." />
       </div>
 
-      <div class="results" id="results"></div>
+      <div id="results"></div>
     </div>
   </div>
 
   <div id="map"></div>
   <div id="status">Зареждам…</div>
 
-  <div id="bizCard">
-    <h3>Business status: ONLINE ✅</h3>
-    <div id="bizRow">
-      <input id="bizCode" type="text" placeholder="Код (пример: SF-SLV-004)" />
-      <button id="bizCheck">Открий</button>
+  <div id="drawer">
+    <div id="drawerHead">
+      <div id="drawerTitle">Избери сервиз…</div>
+      <div class="pill" id="drawerCode">—</div>
     </div>
-    <div id="bizHint">
-      Въведи код → фокусирам сервиза на картата (кодът НЕ се показва никъде в списъка)
+    <div id="drawerBody">
+      <div class="kv" id="drawerInfo">Кликни сервиз от панела или пин на картата.</div>
+
+      <div class="chips">
+        <button class="chip blue" id="btnDirections">Навигация</button>
+        <button class="chip green" id="btnCall">Обади се</button>
+        <button class="chip amber" id="btnReview">Остави отзив</button>
+        <button class="chip" id="btnDiag">Диагностика / История</button>
+        <button class="chip" id="btnPay">Отключи Premium</button>
+      </div>
+
+      <div class="kv" id="drawerMeta"></div>
+      <div class="kv" id="drawerReviews"></div>
     </div>
   </div>
 
-  <!-- Right panel -->
-  <aside id="rightPanel">
-    <div id="rpHead">
-      <div style="min-width:0;flex:1">
-        <div id="rpTitle">—</div>
-        <small id="rpSub">—</small>
+  <div id="modalWrap">
+    <div id="modal">
+      <div id="modalHead">
+        <div id="modalTitle">Modal</div>
+        <button id="modalClose">Затвори</button>
       </div>
-      <button id="rpClose">Затвори</button>
+      <div id="modalBody"></div>
     </div>
-
-    <div id="rpBody">
-      <div class="card">
-        <h4>Основни</h4>
-        <div id="baseInfo" style="font-size:12px;line-height:1.55;color:rgba(17,24,39,.82)"></div>
-
-        <div class="rpBtns">
-          <button class="rpBtn secondary" id="btnOpenGoogle">Отвори в Google</button>
-          <button class="rpBtn" id="btnCenter">Центрирай</button>
-        </div>
-
-        <div class="miniActions">
-          <button class="rpBtn secondary" id="btnGoAccess">Към Business Access</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Профил (локално)</h4>
-
-        <div class="f">
-          <label>Телефон</label>
-          <input id="pPhone" placeholder="+359..." />
-        </div>
-
-        <div class="f">
-          <label>Работно време</label>
-          <input id="pHours" placeholder="Пон-Пет 09:00-18:00" />
-        </div>
-
-        <div class="f">
-          <label>Услуги (кратко)</label>
-          <input id="pServices" placeholder="Диагностика, масла, окачване..." />
-        </div>
-
-        <div class="f">
-          <label>Описание</label>
-          <textarea id="pDesc" placeholder="Кратко описание..."></textarea>
-        </div>
-
-        <div class="rpBtns">
-          <button class="rpBtn" id="btnSaveProfile">Запази</button>
-          <button class="rpBtn secondary" id="btnResetProfile">Reset</button>
-        </div>
-
-        <div style="margin-top:10px;font-size:11px;opacity:.75">
-          *MVP: пази се в localStorage. После го връзваме към Firestore.
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Чат (локално)</h4>
-        <div class="f">
-          <label>Съобщение</label>
-          <textarea id="chatText" placeholder="Напиши нещо..."></textarea>
-        </div>
-        <div class="rpBtns">
-          <button class="rpBtn" id="btnSendChat">Изпрати</button>
-          <button class="rpBtn secondary" id="btnClearChat">Изчисти чат</button>
-        </div>
-        <div id="chatList"></div>
-      </div>
-    </div>
-  </aside>
+  </div>
 
   <script>
-    "use strict";
-
-    // Еднократен анти-кеш байпас (замества Ctrl+F5)
-    (function(){
-      try{
-        if(!sessionStorage.getItem("sf_map_nocache_once")){
-          sessionStorage.setItem("sf_map_nocache_once","1");
-          const u = new URL(location.href);
-          if(!u.searchParams.has("v")){
-            u.searchParams.set("v", Date.now().toString());
-            setTimeout(() => location.replace(u.toString()), 600);
-          }
-        }
-      }catch(_){}
-    })();
-
-    console.log("MAP_USER_BUILD", "2026-01-21-v1");
-
-    // ====== CONFIG ======
-    const DATA_URL = "/QR_serveses/sliven_avtoservizi.txt";
+    // =========================
+    // CONFIG
+    // =========================
+    const DATA_URL = "QR_serveses/sliven_avtoservizi.txt";
     const AUTO_REFRESH_MS = 30 * 60 * 1000;
+    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
 
-    // ====== Active Services Storage ======
-    const ACTIVE_KEY = "sf_cs_activated_services";
-    let viewMode = "active"; // "active" | "all"
-    let activeMetaByCode = new Map(); // CODE -> meta
-
-    function safeJson(s){ try{ return JSON.parse(s); }catch(_){ return null; } }
-
-    function normalizeCode(s){
-      return (s || "")
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g,"-")
-        .replace(/[^A-Z0-9\-]/g,"");
-    }
-
-    function loadActiveMeta(){
-      activeMetaByCode.clear();
-      const arr = safeJson(localStorage.getItem(ACTIVE_KEY)) || [];
-      arr.forEach((a, idx) => {
-        const code = normalizeCode(a?.code || "");
-        if(!code) return;
-        activeMetaByCode.set(code, { ...a, _order: idx + 1 });
-      });
-    }
-
-    function buildActiveRows(allRows){
-      const mapAll = new Map(allRows.map(r => [normalizeCode(r.code||""), r]));
-      const activeArr = Array.from(activeMetaByCode.values())
-        .sort((a,b) => (a._order||9999) - (b._order||9999));
-
-      const out = [];
-      activeArr.forEach(a => {
-        const code = normalizeCode(a.code||"");
-        const hit = mapAll.get(code);
-        if(hit) out.push(hit);
-        else {
-          const lat = Number(a.lat), lng = Number(a.lng);
-          if(Number.isFinite(lat) && Number.isFinite(lng)){
-            out.push({ code, name:a.name||"Автосервиз", addr:a.addr||"", lat, lng, raw:"" });
-          }
-        }
-      });
-      return out;
-    }
-
-    // ====== UI refs ======
-    const panel = document.getElementById("panel-container");
+    // =========================
+    // UI refs
+    // =========================
     const resultsEl = document.getElementById("results");
-    const statusEl = document.getElementById("status");
-    const countPill = document.getElementById("countPill");
-    const panelTitleEl = document.querySelector(".panel-title");
+    const statusEl  = document.getElementById("status");
+    const countEl   = document.getElementById("count");
+    const qEl       = document.getElementById("q");
 
-    const btnReload = document.getElementById("btnReload");
-    const btnShowAll = document.getElementById("btnShowAll");
-    const bizCodeEl = document.getElementById("bizCode");
-    const bizCheckBtn = document.getElementById("bizCheck");
+    const reloadBtn = document.getElementById("reload");
+    const fitAllBtn = document.getElementById("fitAll");
+
+    const drawerTitle  = document.getElementById("drawerTitle");
+    const drawerCode   = document.getElementById("drawerCode");
+    const drawerInfo   = document.getElementById("drawerInfo");
+    const drawerMeta   = document.getElementById("drawerMeta");
+    const drawerReviews= document.getElementById("drawerReviews");
+
+    const btnDirections = document.getElementById("btnDirections");
+    const btnCall = document.getElementById("btnCall");
+    const btnReview = document.getElementById("btnReview");
+    const btnDiag = document.getElementById("btnDiag");
+    const btnPay = document.getElementById("btnPay");
+
+    const modalWrap = document.getElementById("modalWrap");
+    const modalTitle= document.getElementById("modalTitle");
+    const modalBody = document.getElementById("modalBody");
+    const modalClose= document.getElementById("modalClose");
 
     document.getElementById("menu-button").addEventListener("click", () => {
+      const panel = document.getElementById("panel");
       panel.style.display = (panel.style.display === "none") ? "block" : "none";
     });
 
+    modalClose.addEventListener("click", closeModal);
+    modalWrap.addEventListener("click", (e) => { if(e.target === modalWrap) closeModal(); });
+
     function setStatus(t){ statusEl.textContent = t; }
 
-    function setPanelTitle(){
-      if(viewMode === "active"){
-        panelTitleEl.textContent = "Активни сервизи сега";
-        btnShowAll.textContent = "Покажи всички";
-      } else {
-        panelTitleEl.textContent = "Сливен — сервизи от TXT";
-        btnShowAll.textContent = "Покажи активни";
-      }
-    }
+    // =========================
+    // Storage keys (local MVP)
+    // =========================
+    const K_RATE = (code) => `sf_user_rate_${code}`;
+    const K_PREM = (code) => `sf_user_premium_${code}`;
+    const K_REV  = (code) => `sf_user_reviews_${code}`;
+    const K_DIAG = (code) => `sf_user_diag_${code}`;
 
-    // ====== MAP ======
+    // =========================
+    // Map
+    // =========================
     let map, info;
-    let markersByCode = new Map();
     let markers = [];
-    let lastData = [];
+    let byCode = new Map();
+    let lastRows = [];
+    let selectedCode = null;
 
-    const SLIVEN_CENTER = { lat: 42.6852, lng: 26.3293 };
-
-    const USER_CENTER_KEY = "sf_cs_user_center_v1";
-    let userMarker = null;
-
-    function saveCenter(obj){
-      try{ localStorage.setItem(USER_CENTER_KEY, JSON.stringify(obj)); }catch(_){}
-    }
-    function loadCenter(){
-      try{ return JSON.parse(localStorage.getItem(USER_CENTER_KEY) || "null"); }catch(_){ return null; }
-    }
-
-    function getBrowserGeo(timeoutMs=6500){
-      return new Promise((resolve) => {
-        if(!navigator.geolocation) return resolve(null);
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve(null),
-          { enableHighAccuracy:true, timeout: timeoutMs, maximumAge: 60_000 }
-        );
-      });
-    }
-
-    async function getIpGeo(){
-      try{
-        const r = await fetch("https://ipwho.is/?fields=success,latitude,longitude,city,region,country", { cache:"no-store" });
-        const j = await r.json();
-        if(j?.success && Number.isFinite(j.latitude) && Number.isFinite(j.longitude)){
-          return { lat:j.latitude, lng:j.longitude, city:j.city||"", region:j.region||"", country:j.country||"" };
-        }
-      }catch(_){}
-      return null;
-    }
-
-    function showUserPin(pos){
-      if(!map || !pos) return;
-      if(userMarker) userMarker.setMap(null);
-      userMarker = new google.maps.Marker({
-        position: pos,
-        map,
-        title: "Твоята локация",
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillOpacity: 1, strokeWeight: 2 }
-      });
-    }
-
-    async function resolveStartCenter(){
-      const saved = loadCenter();
-      if(saved?.lat && saved?.lng){
-        return { center: {lat:saved.lat, lng:saved.lng}, zoom: saved.zoom || 12, label: saved.label || "Последна локация" };
-      }
-
-      const geo = await getBrowserGeo();
-      if(geo){
-        const out = { center: geo, zoom: 13, label: "Локация: GPS" };
-        saveCenter({ lat: geo.lat, lng: geo.lng, zoom: out.zoom, label: out.label, ts: Date.now() });
-        return out;
-      }
-
-      const ip = await getIpGeo();
-      if(ip){
-        const label = `Локация: ${ip.city || "—"}, ${ip.region || "—"}`;
-        const out = { center: {lat: ip.lat, lng: ip.lng}, zoom: 12, label };
-        saveCenter({ lat: ip.lat, lng: ip.lng, zoom: out.zoom, label: out.label, ts: Date.now() });
-        return out;
-      }
-
-      return { center: SLIVEN_CENTER, zoom: 12, label: "Локация: default (Сливен)" };
-    }
-
-    // ====== TXT LOADING (без кеш) ======
-    async function fetchTxt(url){
-      const res = await fetch(url + "?v=" + Date.now(), { cache: "no-store" });
-      if(!res.ok) throw new Error("Не мога да заредя TXT ("+res.status+"). Провери /public/QR_serveses/.");
-      return await res.text();
-    }
-
-    function parseTxt(txt){
-      const lines = String(txt || "")
-        .split(/\r?\n/)
-        .map(l => l.trim())
-        .filter(l => l && !l.startsWith("#"));
-
-      const out = [];
-      for(const line of lines){
-        const parts = line.split("|").map(p => p.trim());
-        if(parts.length < 5) continue;
-
-        const code = normalizeCode(parts[0]);
-        const name = parts[1] || "Автосервиз";
-        const addr = parts[2] || "";
-        const lat = Number(String(parts[3]).replace(",", "."));
-        const lng = Number(String(parts[4]).replace(",", "."));
-
-        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ code, name, addr, lat, lng, raw: line });
-      }
-      return out;
-    }
-
-    function clearMarkers(){
-      for(const m of markers) m.setMap(null);
-      markers = [];
-      markersByCode.clear();
-    }
-
-    function fitAll(){
-      if(!markers.length){
-        map.setCenter(SLIVEN_CENTER);
-        map.setZoom(12);
-        return;
-      }
-      const bounds = new google.maps.LatLngBounds();
-      markers.forEach(m => bounds.extend(m.getPosition()));
-      map.fitBounds(bounds, 70);
-    }
-
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-      }[m]));
-    }
-
-    function initialsFrom(text){
-      const s = String(text || "").trim();
-      if(!s) return "SF";
-      const parts = s.replace(/[._-]+/g," ").split(" ").filter(Boolean);
-      const a = (parts[0] || "S")[0];
-      const b = (parts[1] || parts[0] || "F")[0];
-      return (a + b).toUpperCase();
-    }
-
-    function markerHtml(row){
-      const mapsLink = `https://www.google.com/maps/search/?api=1&query=${row.lat},${row.lng}`;
-      const meta = activeMetaByCode.get(normalizeCode(row.code||""));
-      const activatedBy = meta?.email ? `${meta.email}${meta.displayName ? " • " + meta.displayName : ""}` : "—";
-
-      return `
-        <div style="font-family:Arial;max-width:290px">
-          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(row.name)}</div>
-          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
-            ${row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br/>` : ""}
-            <b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}<br/>
-            <b>Активирал:</b> ${escapeHtml(activatedBy)}
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-            <a href="${mapsLink}" target="_blank" rel="noopener"
-              style="font-weight:900;text-decoration:none;color:#0b62ff">Отвори в Google</a>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderList(rows, activeMode){
-      resultsEl.innerHTML = "";
-      countPill.textContent = String(rows.length);
-
-      if(!rows.length){
-        resultsEl.innerHTML = `<div style="padding:10px;font-size:12px;opacity:.75">
-          ${activeMode ? "Няма активирани сервизи още. Активирай от Business Access (Google + код)." : "Няма резултати."}
-        </div>`;
-        return;
-      }
-
-      rows.forEach((r) => {
-        const codeKey = normalizeCode(r.code||"");
-        const meta = activeMetaByCode.get(codeKey);
-
-        const photo = meta?.photoURL || "";
-        const email = meta?.email || "";
-        const displayName = meta?.displayName || "";
-
-        const badgeHtml = photo
-          ? `<img src="${escapeHtml(photo)}" alt="Google" referrerpolicy="no-referrer" />`
-          : `<div class="fallback">${escapeHtml(initialsFrom(displayName || email || r.name || "SF"))}</div>`;
-
-        const emailLine = email
-          ? `<div class="row2"><span class="mail">• ${escapeHtml(email)}${displayName ? " • " + escapeHtml(displayName) : ""}</span></div>`
-          : `<div class="row2"><span class="mail">• ${activeMode ? "(няма Google профил)" : "(неактивен)"}</span></div>`;
-
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div class="badge">${badgeHtml}</div>
-          <div class="meta">
-            <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
-            <div class="addr">
-              ${r.addr ? escapeHtml(r.addr) + " • " : ""}
-              ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}
-            </div>
-            ${emailLine}
-          </div>
-        `;
-        el.addEventListener("click", () => focusRow(r.code, true));
-        resultsEl.appendChild(el);
-      });
-    }
-
-    function renderPins(rows, activeMode){
-      clearMarkers();
-
-      rows.forEach((r, idx) => {
-        const labelText = activeMode ? String(idx + 1) : "•";
-
-        const mk = new google.maps.Marker({
-          position: { lat: r.lat, lng: r.lng },
-          map,
-          title: r.name,
-          label: {
-            text: String(labelText),
-            fontSize: "11px",
-            fontWeight: "800",
-            color: "#111",
-            className: "marker-label"
-          }
-        });
-
-        mk.addListener("click", () => {
-          info.setContent(markerHtml(r));
-          info.open({ map, anchor: mk });
-          openRightPanel(r);
-        });
-
-        markers.push(mk);
-        markersByCode.set(normalizeCode(r.code||""), { row: r, marker: mk });
-      });
-    }
-
-    function focusRow(code, openPanel){
-      const key = normalizeCode(code||"");
-      const hit = markersByCode.get(key);
-      if(!hit){
-        setStatus("Няма такъв запис в текущия изглед.");
-        return;
-      }
-      const { row, marker } = hit;
-      map.panTo({ lat: row.lat, lng: row.lng });
-      map.setZoom(16);
-      google.maps.event.trigger(marker, "click");
-      setStatus("OK: " + row.name);
-      if(openPanel) openRightPanel(row);
-    }
-
-    function applyView(allRows){
-      lastData = allRows;
-
-      if(viewMode === "active"){
-        const actRows = buildActiveRows(allRows);
-        renderPins(actRows, true);
-        renderList(actRows, true);
-
-        if(!actRows.length){
-          setStatus("Няма активирани сервизи (още).");
-          map.setCenter(SLIVEN_CENTER);
-          map.setZoom(12);
-          return;
-        }
-
-        setStatus(`OK: ${actRows.length} активни сервиза.`);
-        fitAll();
-      } else {
-        renderPins(allRows, false);
-        renderList(allRows, false);
-        setStatus(`OK: ${allRows.length} сервиза от TXT.`);
-        fitAll();
-      }
-
-      const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
-      if(urlBiz){
-        const hit = markersByCode.get(urlBiz);
-        if(hit) focusRow(urlBiz, true);
-      }
-    }
-
-    async function loadAndRender(first){
-      try{
-        setStatus(first ? "Зареждам TXT…" : "Обновявам…");
-        const txt = await fetchTxt(DATA_URL);
-        const rows = parseTxt(txt);
-
-        loadActiveMeta();
-        applyView(rows);
-      }catch(err){
-        console.error(err);
-        setStatus("Грешка: " + (err?.message || err));
-      }
-    }
-
-    function activateByCode(){
-      const code = normalizeCode(bizCodeEl.value || "");
-      bizCodeEl.value = code;
-      if(!code){ alert("Въведи код (пример: SF-SLV-004)"); return; }
-
-      if(viewMode === "active" && !activeMetaByCode.has(code)){
-        setStatus("Този код не е активиран. Превключвам към всички…");
-        viewMode = "all";
-        setPanelTitle();
-        applyView(lastData);
-      }
-      focusRow(code, true);
-    }
-
-    // ===== Right Panel =====
-    const rp = document.getElementById("rightPanel");
-    const rpClose = document.getElementById("rpClose");
-    const rpTitle = document.getElementById("rpTitle");
-    const rpSub = document.getElementById("rpSub");
-    const baseInfo = document.getElementById("baseInfo");
-    const btnOpenGoogle = document.getElementById("btnOpenGoogle");
-    const btnCenter = document.getElementById("btnCenter");
-    const btnGoAccess = document.getElementById("btnGoAccess");
-
-    const pPhone = document.getElementById("pPhone");
-    const pHours = document.getElementById("pHours");
-    const pServices = document.getElementById("pServices");
-    const pDesc = document.getElementById("pDesc");
-    const btnSaveProfile = document.getElementById("btnSaveProfile");
-    const btnResetProfile = document.getElementById("btnResetProfile");
-
-    const chatText = document.getElementById("chatText");
-    const btnSendChat = document.getElementById("btnSendChat");
-    const btnClearChat = document.getElementById("btnClearChat");
-    const chatList = document.getElementById("chatList");
-
-    let currentRow = null;
-
-    function getProfiles(){ return safeJson(localStorage.getItem("sf_cs_biz_profiles")) || {}; }
-    function saveBizProfile(code, patch){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      all[key] = Object.assign({}, all[key] || {}, patch);
-      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
-    }
-    function deleteBizProfile(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      delete all[key];
-      localStorage.setItem("sf_cs_biz_profiles", JSON.stringify(all));
-    }
-    function loadProfileIntoUI(code){
-      const key = normalizeCode(code);
-      const all = getProfiles();
-      const p = all[key] || {};
-      pPhone.value = p.phone || "";
-      pHours.value = p.hours || "";
-      pServices.value = p.services || "";
-      pDesc.value = p.desc || "";
-    }
-
-    function chatKey(code){ return "sf_cs_chat_" + normalizeCode(code); }
-    function getChat(code){ return safeJson(localStorage.getItem(chatKey(code))) || []; }
-    function pushChat(code, msg){
-      const arr = getChat(code);
-      arr.push(msg);
-      localStorage.setItem(chatKey(code), JSON.stringify(arr.slice(-60)));
-    }
-    function clearChat(code){ localStorage.removeItem(chatKey(code)); }
-    function renderChat(code){
-      const arr = getChat(code);
-      chatList.innerHTML = "";
-      if(!arr.length){
-        chatList.innerHTML = `<div style="font-size:12px;opacity:.7">Няма съобщения (локално).</div>`;
-        return;
-      }
-      arr.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "msg";
-        const ts = m.ts ? new Date(m.ts) : new Date();
-        div.innerHTML = `<b>${escapeHtml(m.from || "—")} • ${escapeHtml(ts.toLocaleString())}</b>${escapeHtml(m.text || "")}`;
-        chatList.appendChild(div);
-      });
-      chatList.scrollTop = chatList.scrollHeight;
-    }
-
-    function wireRightPanel(){
-      rpClose.addEventListener("click", () => rp.classList.remove("show"));
-      btnCenter.addEventListener("click", () => {
-        if(!currentRow) return;
-        map.panTo({lat: currentRow.lat, lng: currentRow.lng});
-        map.setZoom(16);
-      });
-      btnOpenGoogle.addEventListener("click", () => {
-        if(!currentRow) return;
-        const url = `https://www.google.com/maps/search/?api=1&query=${currentRow.lat},${currentRow.lng}`;
-        window.open(url, "_blank", "noopener");
-      });
-      btnGoAccess.addEventListener("click", () => {
-        window.location.href = "access_location_business.html";
-      });
-
-      btnSaveProfile.addEventListener("click", () => {
-        if(!currentRow) return;
-        saveBizProfile(currentRow.code, {
-          phone: pPhone.value.trim(),
-          hours: pHours.value.trim(),
-          services: pServices.value.trim(),
-          desc: pDesc.value.trim(),
-          updatedAt: new Date().toISOString()
-        });
-        setStatus("Запазено: профил за " + currentRow.name);
-        try{ localStorage.setItem("sf_cs_biz_profile_last", String(Date.now())); }catch(_){}
-      });
-
-      btnResetProfile.addEventListener("click", () => {
-        if(!currentRow) return;
-        deleteBizProfile(currentRow.code);
-        loadProfileIntoUI(currentRow.code);
-        setStatus("Reset: профил за " + currentRow.name);
-      });
-
-      btnSendChat.addEventListener("click", () => {
-        if(!currentRow) return;
-        const t = chatText.value.trim();
-        if(!t) return;
-        pushChat(currentRow.code, { from:"BUSINESS", text:t, ts:new Date().toISOString() });
-        chatText.value = "";
-        renderChat(currentRow.code);
-      });
-
-      btnClearChat.addEventListener("click", () => {
-        if(!currentRow) return;
-        clearChat(currentRow.code);
-        renderChat(currentRow.code);
-      });
-
-      window.addEventListener("storage", (e) => {
-        if(!currentRow) return;
-        if(e.key && (e.key === "sf_cs_biz_profiles" || e.key === "sf_cs_biz_profile_last")){
-          loadProfileIntoUI(currentRow.code);
-        }
-      });
-    }
-
-    function openRightPanel(row){
-      currentRow = row;
-
-      const meta = activeMetaByCode.get(normalizeCode(row.code||""));
-      const activatedBy = meta?.email ? `${meta.email}${meta.displayName ? " • " + meta.displayName : ""}` : "—";
-
-      rpTitle.textContent = row.name || "—";
-      rpSub.textContent = "Активирал: " + activatedBy;
-
-      baseInfo.innerHTML =
-        `<b>Име:</b> ${escapeHtml(row.name)}<br>` +
-        (row.addr ? `<b>Адрес:</b> ${escapeHtml(row.addr)}<br>` : "") +
-        `<b>GPS:</b> ${row.lat.toFixed(6)}, ${row.lng.toFixed(6)}<br>` +
-        `<b>Активирал:</b> ${escapeHtml(activatedBy)}<br>`;
-
-      loadProfileIntoUI(row.code);
-      renderChat(row.code);
-      rp.classList.add("show");
-
-      try{
-        localStorage.setItem("sf_cs_business_active", JSON.stringify({
-          code: row.code, name: row.name, addr: row.addr || "", lat: row.lat, lng: row.lng,
-          ts: new Date().toISOString()
-        }));
-      }catch(_){}
-    }
-
-    // ====== GOOGLE CALLBACK (ГЛОБАЛНО!) ======
-    window.initMap = async function initMap(){
-      loadActiveMeta();
-      setPanelTitle();
-
+    function initMap(){
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 12,
         center: SLIVEN_CENTER,
@@ -974,45 +346,512 @@
       });
 
       info = new google.maps.InfoWindow();
-      wireRightPanel();
 
-      // център: GPS -> IP -> default (без да блокира картата)
-      resolveStartCenter().then(loc => {
-        map.setCenter(loc.center);
-        map.setZoom(loc.zoom);
-        showUserPin(loc.center);
-        setStatus(loc.label);
+      reloadBtn.addEventListener("click", () => loadAndRender(false));
+      fitAllBtn.addEventListener("click", () => fitAll());
+      qEl.addEventListener("input", () => renderList(getFiltered()));
+
+      btnDirections.addEventListener("click", () => {
+        const r = getSelectedRow();
+        if(!r) return;
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`, "_blank", "noopener");
       });
 
-      const urlBiz = normalizeCode(new URLSearchParams(location.search).get("biz") || "");
-      if(urlBiz) bizCodeEl.value = urlBiz;
-
-      btnReload.addEventListener("click", () => loadAndRender(false));
-      btnShowAll.addEventListener("click", () => {
-        viewMode = (viewMode === "active") ? "all" : "active";
-        loadActiveMeta();
-        setPanelTitle();
-        applyView(lastData);
+      btnCall.addEventListener("click", () => {
+        const r = getSelectedRow();
+        if(!r) return;
+        if(!r.phone){ alert("Няма телефон в TXT за този сервиз."); return; }
+        window.location.href = `tel:${String(r.phone).replace(/\s+/g,"")}`;
       });
 
-      bizCheckBtn.addEventListener("click", () => activateByCode());
-      bizCodeEl.addEventListener("keydown", (e) => { if(e.key === "Enter") activateByCode(); });
+      btnReview.addEventListener("click", openReviewModal);
+      btnDiag.addEventListener("click", openDiagnostics);
+      btnPay.addEventListener("click", () => openPayModal(false));
 
-      window.addEventListener("storage", (e) => {
-        if(e.key === ACTIVE_KEY){
-          loadActiveMeta();
-          if(viewMode === "active") applyView(lastData);
-        }
-      });
-
-      await loadAndRender(true);
+      loadAndRender(true);
       setInterval(() => loadAndRender(false), AUTO_REFRESH_MS);
-    };
+    }
+
+    // =========================
+    // TXT
+    // =========================
+    async function fetchTxt(url){
+      const res = await fetch(url, { cache:"no-store" });
+      if(!res.ok) throw new Error("TXT не се зарежда ("+res.status+"). Провери пътя и localhost.");
+      return await res.text();
+    }
+
+    // Supported:
+    // CODE | NAME | ADDRESS | LAT | LNG | PHONE? | MAPS?
+    // CODE | NAME | LAT | LNG
+    function parseTxt(txt){
+      const lines = String(txt||"")
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith("#"));
+
+      const out = [];
+
+      for(const line of lines){
+        const parts = line.split("|").map(p => p.trim()).filter(p => p !== "");
+        if(parts.length < 4) continue;
+
+        // find first LAT+LNG numeric pair
+        const nums = parts.map(p => Number(String(p).replace(",", ".")));
+        let latIdx=-1, lngIdx=-1;
+
+        for(let i=0;i<parts.length;i++){
+          const n = nums[i];
+          if(Number.isFinite(n) && Math.abs(n) <= 90){
+            if(i+1 < parts.length){
+              const n2 = nums[i+1];
+              if(Number.isFinite(n2) && Math.abs(n2) <= 180){
+                latIdx=i; lngIdx=i+1; break;
+              }
+            }
+          }
+        }
+        if(latIdx === -1) continue;
+
+        const code = (parts[0]||"").trim();
+        const name = (parts[1]||"Автосервиз").trim();
+
+        const addr = (latIdx >= 3) ? (parts[2] || "") : "";
+        const lat = Number(String(parts[latIdx]).replace(",", "."));
+        const lng = Number(String(parts[lngIdx]).replace(",", "."));
+
+        const tail = parts.slice(lngIdx+1);
+        const phone = tail.find(x => /^[+0-9][0-9\s-]{6,}$/.test(x||"")) || "";
+        const maps  = tail.find(x => /^https?:\/\//i.test(x||"")) || "";
+
+        if(!code || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+        out.push({ code, name, addr, lat, lng, phone, maps, raw: line });
+      }
+      return out;
+    }
+
+    // =========================
+    // Render
+    // =========================
+    function clearMarkers(){
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+      byCode.clear();
+    }
+
+    function fitAll(){
+      if(!markers.length){
+        map.setCenter(SLIVEN_CENTER);
+        map.setZoom(12);
+        return;
+      }
+      const b = new google.maps.LatLngBounds();
+      markers.forEach(m => b.extend(m.getPosition()));
+      map.fitBounds(b, 70);
+    }
+
+    function getFiltered(){
+      const q = (qEl.value||"").trim().toLowerCase();
+      if(!q) return lastRows.slice();
+      return lastRows.filter(r => (`${r.code} ${r.name} ${r.addr}`.toLowerCase()).includes(q));
+    }
+
+    function renderPins(rows){
+      clearMarkers();
+
+      rows.forEach((r) => {
+        const mk = new google.maps.Marker({
+          position: { lat: r.lat, lng: r.lng },
+          map,
+          title: r.name
+          // НЯМА label -> нищо не се застъпва върху картата.
+        });
+
+        mk.addListener("click", () => selectService(r.code, true));
+
+        markers.push(mk);
+        byCode.set(r.code.toUpperCase(), { row:r, marker:mk });
+      });
+    }
+
+    function renderList(rows){
+      resultsEl.innerHTML = "";
+      countEl.textContent = String(rows.length);
+
+      rows.forEach((r) => {
+        const rate = getUserRate(r.code);
+        const prem = isPremium(r.code);
+
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="badge">${escapeHtml(r.code)}</div>
+          <div class="meta">
+            <div class="nameRow">
+              <div class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</div>
+              <div class="stars" data-code="${escapeHtml(r.code)}">${starsHTML(rate)}</div>
+            </div>
+            <div class="addr">
+              ${r.addr ? escapeHtml(r.addr) + "<br/>" : ""}
+              <span style="opacity:.9">GPS:</span> ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}
+            </div>
+            <div class="row2">
+              <span>${prem ? "🔓 Premium" : "🔒 Premium"}</span>
+              <a class="link" target="_blank" rel="noopener"
+                href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}">Google</a>
+              ${r.phone ? `<span style="font-weight:900">📞 ${escapeHtml(r.phone)}</span>` : `<span style="opacity:.7">📞 (липсва)</span>`}
+            </div>
+          </div>
+        `;
+
+        el.addEventListener("click", (e) => {
+          if(e.target && e.target.classList && e.target.classList.contains("star")) return;
+          selectService(r.code, true);
+        });
+
+        resultsEl.appendChild(el);
+      });
+
+      // bind stars
+      document.querySelectorAll(".stars").forEach(box => {
+        const code = box.getAttribute("data-code");
+        box.querySelectorAll(".star").forEach(st => {
+          st.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const v = Number(st.getAttribute("data-v")||"0");
+            setUserRate(code, v);
+            renderList(getFiltered());
+            if(selectedCode && selectedCode.toUpperCase() === code.toUpperCase()){
+              renderDrawer(code);
+            }
+          });
+        });
+      });
+    }
+
+    function starsHTML(rate){
+      let h="";
+      for(let i=1;i<=5;i++){
+        h += `<span class="star ${i<=rate ? "on":""}" data-v="${i}">★</span>`;
+      }
+      return h;
+    }
+
+    function infoHTML(r){
+      const prem = isPremium(r.code);
+      const rate = getUserRate(r.code);
+      const mapsLink = r.maps ? r.maps : `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lng}`;
+      const call = r.phone ? `<a class="link" href="tel:${escapeAttr(String(r.phone).replace(/\s+/g,""))}">📞 Обади се</a>`
+                           : `<span style="opacity:.7">📞 (липсва телефон)</span>`;
+
+      return `
+        <div style="font-family:Arial;max-width:280px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:6px">${escapeHtml(r.name)}</div>
+          <div style="font-size:12px;color:rgba(17,24,39,.75);margin-bottom:8px">
+            <b>Код:</b> ${escapeHtml(r.code)}<br/>
+            ${r.addr ? `<b>Адрес:</b> ${escapeHtml(r.addr)}<br/>` : ""}
+            <b>GPS:</b> ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}<br/>
+            <b>Твоите ⭐:</b> ${rate}/5<br/>
+            <b>Premium:</b> ${prem ? "Да" : "Не"}
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="link" target="_blank" rel="noopener" href="${escapeAttr(mapsLink)}">Отвори в Google</a>
+            ${call}
+          </div>
+        </div>
+      `;
+    }
+
+    function selectService(code, pan){
+      const key = String(code||"").trim().toUpperCase();
+      const hit = byCode.get(key);
+      if(!hit){ setStatus("Няма такъв код: " + key); return; }
+
+      selectedCode = key;
+      const { row, marker } = hit;
+
+      if(pan){
+        map.panTo({ lat: row.lat, lng: row.lng });
+        map.setZoom(15);
+      }
+
+      info.setContent(infoHTML(row));
+      info.open({ map, anchor: marker });
+
+      renderDrawer(row.code);
+      setStatus("OK: " + row.code + " — " + row.name);
+    }
+
+    function renderDrawer(code){
+      const r = byCode.get(String(code||"").toUpperCase())?.row;
+      if(!r){
+        drawerTitle.textContent = "Избери сервиз…";
+        drawerCode.textContent = "—";
+        drawerInfo.textContent = "Кликни сервиз от панела или пин на картата.";
+        drawerMeta.textContent = "";
+        drawerReviews.innerHTML = "";
+        return;
+      }
+
+      const prem = isPremium(r.code);
+      const rate = getUserRate(r.code);
+      const reviews = getReviews(r.code);
+
+      drawerTitle.textContent = r.name;
+      drawerCode.textContent = r.code;
+
+      drawerInfo.innerHTML = `
+        <div class="kv">
+          ${r.addr ? `<b>Адрес:</b> ${escapeHtml(r.addr)}<br/>` : ""}
+          <b>GPS:</b> ${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}<br/>
+          <b>Телефон:</b> ${r.phone ? escapeHtml(r.phone) : "липсва в TXT"}
+        </div>
+      `;
+
+      drawerMeta.innerHTML = `
+        <div class="kv">
+          <b>Твоите ⭐:</b> ${rate}/5 &nbsp; • &nbsp;
+          <b>Premium:</b> ${prem ? `<span style="color:var(--green);font-weight:900">Активен</span>`
+                                 : `<span style="color:var(--red);font-weight:900">Заключен</span>`}
+        </div>
+      `;
+
+      drawerReviews.innerHTML = reviewsHTML(reviews);
+
+      btnCall.style.opacity = r.phone ? "1" : ".55";
+    }
+
+    async function loadAndRender(first){
+      try{
+        setStatus(first ? "Зареждам TXT…" : "Обновявам от TXT…");
+        const txt = await fetchTxt(DATA_URL);
+        const rows = parseTxt(txt);
+
+        lastRows = rows;
+        renderPins(rows);
+        renderList(getFiltered());
+
+        if(first) fitAll();
+
+        // keep selection after refresh
+        if(selectedCode && byCode.has(selectedCode)){
+          renderDrawer(selectedCode);
+        }
+
+        setStatus(`OK: ${rows.length} сервиза от TXT. Auto-refresh: ${Math.round(AUTO_REFRESH_MS/60000)} мин.`);
+      }catch(err){
+        console.error(err);
+        setStatus("Грешка: " + (err?.message || err));
+      }
+    }
+
+    // =========================
+    // Reviews + Premium + Diagnostics (local MVP)
+    // =========================
+    function getUserRate(code){
+      const v = Number(localStorage.getItem(K_RATE(code)) || "0");
+      return Number.isFinite(v) ? Math.max(0, Math.min(5, v)) : 0;
+    }
+    function setUserRate(code, v){
+      const n = Math.max(0, Math.min(5, Number(v||0)));
+      localStorage.setItem(K_RATE(code), String(n));
+    }
+
+    function isPremium(code){ return localStorage.getItem(K_PREM(code)) === "true"; }
+    function setPremium(code, on){ localStorage.setItem(K_PREM(code), on ? "true" : "false"); }
+
+    function getReviews(code){
+      try{ return JSON.parse(localStorage.getItem(K_REV(code)) || "[]"); }
+      catch(e){ return []; }
+    }
+    function addReview(code, review){
+      const arr = getReviews(code);
+      arr.push(review);
+      localStorage.setItem(K_REV(code), JSON.stringify(arr));
+    }
+
+    function getDiagnostics(code){
+      try{ return JSON.parse(localStorage.getItem(K_DIAG(code)) || "[]"); }
+      catch(e){ return []; }
+    }
+    function addDiagnostic(code, entry){
+      const arr = getDiagnostics(code);
+      arr.push(entry);
+      localStorage.setItem(K_DIAG(code), JSON.stringify(arr));
+    }
+
+    function openReviewModal(){
+      const r = getSelectedRow();
+      if(!r){ alert("Избери сервиз първо."); return; }
+
+      modalTitle.textContent = `Отзив за: ${r.name}`;
+      modalBody.innerHTML = `
+        <div class="field">
+          <label>Заглавие</label>
+          <input id="rvTitle" placeholder="Напр. Бързи и точни" />
+        </div>
+        <div class="field">
+          <label>Звезди (1-5)</label>
+          <input id="rvStars" type="number" min="1" max="5" value="${Math.max(1, getUserRate(r.code) || 5)}" />
+        </div>
+        <div class="field">
+          <label>Текст</label>
+          <textarea id="rvText" placeholder="Опиши реално как мина…"></textarea>
+        </div>
+        <div class="modalActions">
+          <button class="btn" id="rvSave">Запази</button>
+          <button class="btn secondary" id="rvCancel">Отказ</button>
+        </div>
+      `;
+      openModal();
+
+      document.getElementById("rvCancel").onclick = closeModal;
+      document.getElementById("rvSave").onclick = () => {
+        const title = (document.getElementById("rvTitle").value || "").trim();
+        const stars = Math.max(1, Math.min(5, Number(document.getElementById("rvStars").value || "5")));
+        const text  = (document.getElementById("rvText").value  || "").trim();
+        if(!text){ alert("Напиши поне 1 изречение."); return; }
+
+        addReview(r.code, { title: title || "Отзив", stars, text, ts: new Date().toLocaleString("bg-BG") });
+        setUserRate(r.code, stars);
+
+        closeModal();
+        renderList(getFiltered());
+        renderDrawer(r.code);
+        setStatus("Отзивът е записан (локално).");
+      };
+    }
+
+    function openDiagnostics(){
+      const r = getSelectedRow();
+      if(!r){ alert("Избери сервиз първо."); return; }
+      if(!isPremium(r.code)){ openPayModal(true); return; }
+
+      const arr = getDiagnostics(r.code).slice().reverse();
+      const list = arr.length ? arr.map(x => `
+        <div style="border:1px solid rgba(17,24,39,.10);border-radius:12px;padding:10px;background:#fff;margin-top:8px">
+          <div style="font-weight:900;font-size:12px;color:var(--ink)">
+            ${escapeHtml(x.car||"Автомобил")} • ${escapeHtml(x.problem||"Диагностика")}
+          </div>
+          <div style="font-size:12px;color:rgba(17,24,39,.78);margin-top:6px;white-space:pre-wrap">${escapeHtml(x.details||"")}</div>
+          <div style="font-size:11px;opacity:.65;margin-top:6px">${escapeHtml(x.ts||"")}</div>
+        </div>
+      `).join("") : `<div class="kv">Няма история. Добави първа диагностика.</div>`;
+
+      modalTitle.textContent = `Диагностика / История — ${r.name}`;
+      modalBody.innerHTML = `
+        <div class="kv"><b>Premium:</b> активен ✅</div>
+
+        <div style="margin-top:12px;border-top:1px solid rgba(17,24,39,.12);padding-top:12px">
+          <div class="field">
+            <label>Автомобил (пример: Mercedes C200 / рег.№)</label>
+            <input id="dgCar" placeholder="Колата..." />
+          </div>
+          <div class="field">
+            <label>Проблем / Диагноза</label>
+            <input id="dgProblem" placeholder="Напр. трака отпред..." />
+          </div>
+          <div class="field">
+            <label>Детайли</label>
+            <textarea id="dgDetails" placeholder="Какво е установено, части, цена, дата, следваща смяна..."></textarea>
+          </div>
+          <div class="modalActions">
+            <button class="btn" id="dgSave">Запази</button>
+            <button class="btn secondary" id="dgClose">Затвори</button>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;border-top:1px solid rgba(17,24,39,.12);padding-top:12px">
+          <div style="font-weight:900;color:var(--ink);margin-bottom:6px">Последни записи</div>
+          ${list}
+        </div>
+      `;
+      openModal();
+
+      document.getElementById("dgClose").onclick = closeModal;
+      document.getElementById("dgSave").onclick = () => {
+        const car = (document.getElementById("dgCar").value || "").trim();
+        const problem = (document.getElementById("dgProblem").value || "").trim();
+        const details = (document.getElementById("dgDetails").value || "").trim();
+        if(!car || !problem){ alert("Попълни поне 'Автомобил' и 'Проблем'."); return; }
+
+        addDiagnostic(r.code, { car, problem, details, ts: new Date().toLocaleString("bg-BG") });
+        closeModal();
+        setStatus("Диагностиката е записана (локално).");
+      };
+    }
+
+    function openPayModal(fromDiag){
+      const r = getSelectedRow();
+      if(!r){ alert("Избери сервиз първо."); return; }
+
+      modalTitle.textContent = `Premium — ${r.name}`;
+      modalBody.innerHTML = `
+        <div class="kv" style="margin-bottom:10px">
+          ${fromDiag ? "<b>Диагностиката е заключена.</b> Отключва се с Premium." : "Отключи Premium за история/диагностика."}
+        </div>
+        <div style="border:1px solid rgba(17,24,39,.12);border-radius:14px;padding:12px;background:#fff">
+          <div style="font-weight:900;color:var(--ink)">SoulFlame Premium (MVP)</div>
+          <div class="kv" style="margin-top:6px">
+            • История на колата + диагностика<br/>
+            • Реално плащане: Stripe (по-късно)
+          </div>
+          <div class="kv" style="margin-top:10px"><b>Цена (пример):</b> 9.99 лв/месец</div>
+          <div class="modalActions" style="margin-top:10px">
+            <button class="btn" id="paySim">Симулирай плащане (unlock)</button>
+            <button class="btn secondary" id="payCancel">Отказ</button>
+          </div>
+        </div>
+      `;
+      openModal();
+
+      document.getElementById("payCancel").onclick = closeModal;
+      document.getElementById("paySim").onclick = () => {
+        setPremium(r.code, true);
+        closeModal();
+        renderList(getFiltered());
+        renderDrawer(r.code);
+        setStatus("Premium отключен (локално) за: " + r.code);
+      };
+    }
+
+    function reviewsHTML(list){
+      if(!list || !list.length) return `<div class="kv"><b>Отзиви:</b> още няма.</div>`;
+      const top = list.slice().reverse().slice(0, 5);
+      const items = top.map(x => `
+        <div style="border:1px solid rgba(17,24,39,.10);border-radius:12px;padding:10px;background:#fff;margin-top:8px">
+          <div style="font-weight:900;font-size:12px;color:var(--ink)">
+            ${escapeHtml(x.title||"Отзив")} • ⭐ ${Number(x.stars||0)}/5
+          </div>
+          <div style="font-size:12px;color:rgba(17,24,39,.78);margin-top:6px;white-space:pre-wrap">${escapeHtml(x.text||"")}</div>
+          <div style="font-size:11px;opacity:.65;margin-top:6px">${escapeHtml(x.ts||"")}</div>
+        </div>
+      `).join("");
+      return `<div class="kv"><b>Отзиви:</b>${items}</div>`;
+    }
+
+    function getSelectedRow(){
+      if(!selectedCode) return null;
+      return byCode.get(selectedCode)?.row || null;
+    }
+
+    function openModal(){ modalWrap.style.display="flex"; }
+    function closeModal(){ modalWrap.style.display="none"; modalBody.innerHTML=""; }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+    function escapeAttr(str){
+      return String(str).replace(/"/g, "&quot;");
+    }
   </script>
 
-  <!-- ✅ Само ЕДИН Google Maps script. Без libraries=places. -->
-  <script defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&callback=initMap&loading=async">
+  <!-- Само Maps JS. Никакъв Places API usage в кода. -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnqcxQTJgW-BLqrX2OqUZYV_QuJ4AHzGQ&callback=initMap">
   </script>
 </body>
 </html>
